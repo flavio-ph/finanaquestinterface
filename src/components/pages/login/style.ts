@@ -1,159 +1,153 @@
 import { StyleSheet } from "react-native";
 
-const COLORS = {
-    primary: '#6A1B9A',     
-    background: '#121212',   
-    card: '#1E1E1E',         
-    textPrimary: '#FFFFFF',  
-    textSecondary: '#B0B0B0', 
-    inputBorder: '#4A4A4A',
-    divider: '#333',         
+// --- Constantes de Design (Tema FinanQuest) ---
+export const COLORS = {
+    primary: '#6A1B9A',      // Roxo
+    background: '#121212',   // Fundo principal
+    card: '#1E1E1E',         // Fundo dos cards/inputs
+    textPrimary: '#FFFFFF',
+    textSecondary: '#B0B0B0',
+    inputBorder: '#333333',
+    divider: '#333',
 };
 // ---------------------------------------------------
 
 export const style = StyleSheet.create({
-
-   container: {
+    container: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        minWidth: '100%',
-        minHeight: '100%',
-        padding: 0, 
-        backgroundColor: COLORS.background, 
-    },
-    form: {
-        width: 350,
-        borderRadius: 12, 
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
+        backgroundColor: COLORS.background,
     },
 
-    login: {
-        fontSize: 36,
-        fontWeight: '700',
-        color: COLORS.textPrimary, 
-        marginBottom: 32,
+    subtext: {
+        color: COLORS.textPrimary,
+        
     },
 
-    possuiconta: {
-        color: COLORS.textSecondary, 
-        marginBottom: 32,
-        marginTop: 24,
-    },
+    header: {
+        backgroundColor: COLORS.primary,
+        height: "60%",
+        justifyContent: "center",
+        alignItems: "center",
+        borderBottomLeftRadius: 60,
+        borderBottomRightRadius: 60,
 
-    facalogin: {
-        color: COLORS.primary, 
-        fontWeight: '500'
-    },
-
-    emailsenha: {
-        // Label "Email"
-        color: COLORS.textSecondary,
-        minWidth: '100%',
-        textAlign: 'left', 
-    },
-
-    input: {
-        // Estilo para o <TextInput>
-        borderColor: COLORS.primary, 
-        height: '100%',
-        color: COLORS.textPrimary, 
-        fontSize: 16,
-    },
-
-    boxinput: {
-        // View do <TextInput>
-        minWidth: '100%',
-        height: 45,
-        borderWidth: 1,
-        borderRadius: 10,
-        borderColor: COLORS.inputBorder, 
-        marginTop: 8,
-        paddingHorizontal: 10, 
-        justifyContent: 'center',
-    },
-
-    senha: {
-        // Label "Senha"
-        marginTop: 24,
-        color: COLORS.textSecondary,
-        minWidth: '100%',
-        textAlign: 'left',
-    },
-
-    esqueceusenha: {
-        minWidth: '100%',
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 16,
-        marginBottom: 24,
-    },
-
-    textoesqueceusenha: {
-        color: COLORS.primary, 
-        fontWeight: '500'
-    },
-
-    botao: {
-        minHeight: 50,
-        minWidth: '100%',
-        backgroundColor: COLORS.primary, 
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 10, 
-    },
-
-    textoentrar: {
-        color: COLORS.textPrimary, 
-        fontWeight: '500',
-        fontSize: 16,
-    },
-
-    grupoOu: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minWidth: '100%',
-        marginTop: 16,
-        gap: 16,
-    },
-
-    linha: {
-        flex: 1, 
-        height: 1, 
-        backgroundColor: COLORS.divider, 
     },
 
     logo: {
-        maxHeight: 16,
-        minHeight: 16,
-        width: 16,
+        width: 60,
+        height: 60,
+        tintColor: COLORS.textPrimary,
     },
 
-    logos: {
-        // Botão de Login Social
-        marginTop: 16,
-        display: 'flex',
-        flexDirection: 'row',
-        minWidth: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
+    card: {
+        backgroundColor: COLORS.card,
+        width: "88%",
+        alignSelf: "center",
+        marginTop: -60,
+        padding: 25,
+        borderRadius: 25,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+
+    title: {
+        textAlign: "center",
+        fontSize: 26,
+        fontWeight: "bold",
+        color: COLORS.textPrimary,
+        marginBottom: 8,
+    },
+
+    inputGroup: {
+        marginBottom: 18,
+    },
+
+    label: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        marginBottom: 6,
+    },
+
+    input: {
         height: 50,
-        borderStyle: 'solid',
-        borderWidth: 1,
-        borderColor: COLORS.inputBorder, 
+        backgroundColor: "#1A1A1A", // leve contraste mantendo tema dark
         borderRadius: 10,
+        paddingHorizontal: 15,
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: COLORS.inputBorder,
+        color: COLORS.textPrimary,
     },
 
-    textoLogo: {
-        color: COLORS.textSecondary, 
-        fontWeight: '500',
+    button: {
+        backgroundColor: COLORS.primary,
+        height: 50,
+        borderRadius: 12,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 10,
     },
- 
+
+    buttonText: {
+        color: COLORS.textPrimary,
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+
+    footer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: 20,
+    },
+
+    footerText: {
+        color: COLORS.textSecondary,
+        fontSize: 14,
+    },
+
+    footerLink: {
+        color: COLORS.primary,
+        fontWeight: "bold",
+        fontSize: 14,
+    },
+     dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: COLORS.divider,
+    },
+    dividerText: {
+        marginTop: 24,
+        color: COLORS.textSecondary,
+        paddingHorizontal: 16,
+        fontSize: 14,
+    },
+    socialButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 20,
+        marginBottom: 8,
+    },
+    socialButton: {
+        width: 60,
+        height: 60,
+        borderRadius: 12,
+        backgroundColor: COLORS.card,
+        borderWidth: 1,
+        borderColor: COLORS.inputBorder,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    footerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+
 });
