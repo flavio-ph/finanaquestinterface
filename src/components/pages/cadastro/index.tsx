@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
-import { style } from "./style";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { FontAwesome } from '@expo/vector-icons';
+import { style, COLORS } from "./style";
 
 export default function Cadastro() {
     const navigation = useNavigation<NavigationProp<any>>();
@@ -15,10 +16,9 @@ export default function Cadastro() {
 
             {/* Topo Preto com curva */}
             <View style={style.header}>
-                <Image 
-                    source={require("../../../assets/logo.png")} 
-                    style={style.logo}
-                />
+               
+                  <Text style={style.title}>Olá, seja bem vindo!</Text>
+                <Text style={style.subtext}>Cadastre-se para continuar</Text>
             </View>
 
             {/* Card Branco */}
@@ -29,7 +29,7 @@ export default function Cadastro() {
                 {/* First Name */}
                 <View style={style.inputGroup}>
                     <Text style={style.label}>Nome</Text>
-                    <TextInput 
+                    <TextInput
                         style={style.input}
                         placeholderTextColor="#999"
                     />
@@ -38,7 +38,7 @@ export default function Cadastro() {
                 {/* Last Name */}
                 <View style={style.inputGroup}>
                     <Text style={style.label}>Sobrenome</Text>
-                    <TextInput 
+                    <TextInput
                         style={style.input}
                         placeholderTextColor="#999"
                     />
@@ -47,7 +47,7 @@ export default function Cadastro() {
                 {/* Email */}
                 <View style={style.inputGroup}>
                     <Text style={style.label}>Email</Text>
-                    <TextInput 
+                    <TextInput
                         style={style.input}
                         placeholderTextColor="#999"
                         keyboardType="email-address"
@@ -57,7 +57,7 @@ export default function Cadastro() {
                 {/* Password */}
                 <View style={style.inputGroup}>
                     <Text style={style.label}>Senha</Text>
-                    <TextInput 
+                    <TextInput
                         style={style.input}
                         placeholderTextColor="#999"
                         secureTextEntry
@@ -67,7 +67,7 @@ export default function Cadastro() {
                 {/* Confirm Password */}
                 <View style={style.inputGroup}>
                     <Text style={style.label}>Confirme a senha</Text>
-                    <TextInput 
+                    <TextInput
                         style={style.input}
                         placeholder="••••••••"
                         placeholderTextColor="#999"
@@ -87,6 +87,7 @@ export default function Cadastro() {
                         <Text style={style.footerLink}>Faça login</Text>
                     </TouchableOpacity>
                 </View>
+
 
             </View>
 

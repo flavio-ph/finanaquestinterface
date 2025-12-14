@@ -10,6 +10,7 @@ import Extrato from "../components/pages/extrato";
 import Metas from "../components/pages/metas";
 import Relatorio from "../components/pages/relatorio";
 import Challenges from "../components/pages/desafios";
+import Conquistas from "../components/pages/conquistas";
 
 export default function Routes(){
 
@@ -65,6 +66,10 @@ export default function Routes(){
                 <Stack.Screen
                 name="Challenges"
                 component={Challenges}
+                />
+                 <Stack.Screen
+                name="Conquistas"
+                component={Conquistas}
                 />
         </Stack.Navigator>
     )
