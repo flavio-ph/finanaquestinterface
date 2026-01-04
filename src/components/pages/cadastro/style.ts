@@ -65,7 +65,7 @@ export const style = StyleSheet.create({
 
     input: {
         height: 50,
-        backgroundColor: COLORS.card, 
+        backgroundColor: COLORS.card,
         borderRadius: 10,
         paddingHorizontal: 15,
         fontSize: 16,
@@ -104,5 +104,45 @@ export const style = StyleSheet.create({
         color: COLORS.primary, // roxo
         fontWeight: "bold",
         fontSize: 14,
+    },
+
+    subtext: {
+        color: COLORS.textPrimary
+    },
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 32,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: COLORS.card,
+    },
+    dividerText: {
+        marginTop: 24,
+        color: COLORS.textSecondary,
+        paddingHorizontal: 16,
+        fontSize: 14,
+    },
+    socialButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 20,
+        marginBottom: 8,
+    },
+    socialButton: {
+        width: 60,
+        height: 60,
+        borderRadius: 12,
+        backgroundColor: COLORS.card,
+        borderWidth: 1,
+        borderColor: COLORS.inputBorder,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    footerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
     },
 });

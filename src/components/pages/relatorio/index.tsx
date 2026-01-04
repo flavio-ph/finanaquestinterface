@@ -73,23 +73,21 @@ export default function Relatorio() {
                 </View>
             </View>
 
-            {/* Gráfico 1: Despesas por Categoria */}
             <View style={style.chartSection}>
                 <Text style={style.chartTitle}>Despesas por Categoria</Text>
                 <PieChart
                     data={categoryData}
-                    width={screenWidth - 64} // Ajuste fino para caber no card com padding
+                    width={screenWidth - 64} 
                     height={220}
                     chartConfig={chartConfig}
                     accessor={"population"}
                     backgroundColor={"transparent"}
                     paddingLeft={"15"}
-                    absolute // Mostra valores absolutos (tire para mostrar porcentagem)
+                    absolute 
                     hasLegend={true}
                 />
             </View>
 
-            {/* Gráfico 2: Comparativo Mensal */}
             <View style={style.chartSection}>
                 <Text style={style.chartTitle}>Evolução do Saldo (6 Meses)</Text>
                 <LineChart
