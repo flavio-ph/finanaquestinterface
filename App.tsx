@@ -3,17 +3,18 @@ import './gesture.handler'
 import Routes from './src/routes/index.routes';
 import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
+import { AuthProvider } from './src/services/authContext';
 
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Routes/>
+      <AuthProvider> 
+        <Routes/>
+      </AuthProvider>
     </NavigationContainer>
-
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
