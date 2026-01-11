@@ -25,7 +25,7 @@ export const style = StyleSheet.create({
 
     header: {
         backgroundColor: COLORS.primary,
-        height: "60%",
+        height: "30%",
         justifyContent: "center",
         alignItems: "center",
         borderBottomLeftRadius: 60,

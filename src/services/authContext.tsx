@@ -1,8 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import api from './api';
-import { Alert } from 'react-native';
-
+import api from '../services/api';
+import { Alert, Platform } from 'react-native'; // Importar Platform
 
 export interface User {
     id: number;
@@ -14,10 +13,10 @@ export interface User {
 
 interface AuthContextData {
     user: User | null;
-    loading: boolean; 
+    loading: boolean;
     signIn: (email: string, password: string) => Promise<void>;
     signOut: () => void;
-    updateUser: (user: User) => void; 
+    updateUser: (user: User) => void;
 }
 
 interface AuthProviderProps {
@@ -30,11 +29,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // --- FUNÇÕES AUXILIARES PARA WEB vs MOBILE ---
+    
+    async function setStorage(key: string, value: string) {
+        if (Platform.OS === 'web') {
+            localStorage.setItem(key, value);
+        } else {
+            await SecureStore.setItemAsync(key, value);
+        }
+    }
+
+    async function getStorage(key: string) {
+        if (Platform.OS === 'web') {
+            return localStorage.getItem(key);
+        } else {
+            return await SecureStore.getItemAsync(key);
+        }
+    }
+
+    async function removeStorage(key: string) {
+        if (Platform.OS === 'web') {
+            localStorage.removeItem(key);
+        } else {
+            await SecureStore.deleteItemAsync(key);
+        }
+    }
+    // ---------------------------------------------
+
     useEffect(() => {
         async function loadStorageData() {
             try {
-                const storedToken = await SecureStore.getItemAsync('userToken');
-                const storedUser = await SecureStore.getItemAsync('userData');
+                // Usa a função auxiliar
+                const storedToken = await getStorage('userToken');
+                const storedUser = await getStorage('userData');
 
                 if (storedToken && storedUser) {
                     api.defaults.headers.Authorization = `Bearer ${storedToken}`;
@@ -61,8 +88,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
             api.defaults.headers.Authorization = `Bearer ${token}`;
 
-            await SecureStore.setItemAsync('userToken', token);
-            await SecureStore.setItemAsync('userData', JSON.stringify(user));
+            // Usa a função auxiliar
+            await setStorage('userToken', token);
+            await setStorage('userData', JSON.stringify(user));
 
             setUser(user);
 
@@ -73,15 +101,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     async function signOut() {
-        await SecureStore.deleteItemAsync('userToken');
-        await SecureStore.deleteItemAsync('userData');
-        api.defaults.headers.Authorization = null; // Limpa o header
+        // Usa a função auxiliar
+        await removeStorage('userToken');
+        await removeStorage('userData');
+        api.defaults.headers.Authorization = null;
         setUser(null);
     }
 
     async function updateUser(updatedUser: User) {
         setUser(updatedUser);
-        await SecureStore.setItemAsync('userData', JSON.stringify(updatedUser));
+        // Usa a função auxiliar
+        await setStorage('userData', JSON.stringify(updatedUser));
     }
 
     return (
