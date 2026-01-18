@@ -7,21 +7,24 @@ import {
     ScrollView, 
     KeyboardAvoidingView, 
     Platform, 
-    Alert 
+    Alert,
+    ActivityIndicator,
+    Keyboard
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 import { style, COLORS } from './style';
 import { FontAwesome } from '@expo/vector-icons';
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
+import api from '../../../services/api';
 
 type ParamList = {
     TransactionForm: {
         transactionToEdit?: {
             id: number;
             type: 'DESPESA' | 'RECEITA';
-            amount: string;
+            amount: number; // Backend manda number
             description: string;
-            category: string;
             date: string;
         };
     };
@@ -31,75 +34,110 @@ export default function Transacao() {
     const navigation = useNavigation();
     const route = useRoute<RouteProp<ParamList, 'TransactionForm'>>();
     const transactionToEdit = route.params?.transactionToEdit;
-
     const isEditing = !!transactionToEdit;
 
-    // Estados do Formulário
+    // Estados
     const [type, setType] = useState<'DESPESA' | 'RECEITA'>('DESPESA');
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('');
-    const [date, setDate] = useState(new Date()); // Usando objeto Date
+    const [date, setDate] = useState(new Date());
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Se estiver editando, preenche os campos na montagem
+    // Preenche dados se for Edição
     useEffect(() => {
         if (transactionToEdit) {
             setType(transactionToEdit.type);
-            setAmount(transactionToEdit.amount);
+            setAmount(String(transactionToEdit.amount)); // Converte number para string pro input
             setDescription(transactionToEdit.description);
-            setCategory(transactionToEdit.category);
-            setDate(new Date(transactionToEdit.date));
+            // Corrige o fuso horário ou usa a string direta YYYY-MM-DD
+            if (transactionToEdit.date) {
+                setDate(new Date(transactionToEdit.date));
+            }
         }
     }, [transactionToEdit]);
 
-    const handleSave = () => {
-        if (!amount || !description || !category) {
-            Alert.alert("Atenção", "Por favor, preencha todos os campos.");
-            return;
+    async function handleSave() {
+        Keyboard.dismiss();
+
+        if (!amount || !description) {
+            return Alert.alert("Atenção", "Preencha o valor e a descrição.");
         }
 
-        const transactionData = {
-            type,
-            amount: parseFloat(amount.replace(',', '.')), // Tratamento básico de moeda
+        // Formatação do valor (troca vírgula por ponto)
+        const cleanAmount = amount.replace(/\./g, '').replace(',', '.');
+        const numericAmount = parseFloat(cleanAmount);
+
+        if (isNaN(numericAmount) || numericAmount <= 0) {
+            return Alert.alert("Erro", "Valor inválido.");
+        }
+
+        const payload = {
             description,
-            category,
-            date: date.toISOString().split('T')[0] // Formato YYYY-MM-DD
+            amount: numericAmount,
+            type,
+            date: date.toISOString().split('T')[0] // YYYY-MM-DD
         };
 
-        console.log("Salvando Transação:", transactionData);
-        Alert.alert("Sucesso", isEditing ? "Transação atualizada!" : "Transação criada!");
-        navigation.goBack();
+        try {
+            setIsLoading(true);
+
+            if (isEditing && transactionToEdit) {
+                // EDITAR (PUT)
+                await api.put(`/api/transactions/${transactionToEdit.id}`, payload);
+                Toast.show({ type: 'success', text1: 'Atualizado!', text2: 'Transação alterada com sucesso.' });
+            } else {
+                // CRIAR (POST)
+                await api.post('/api/transactions', payload);
+                Toast.show({ type: 'success', text1: 'Sucesso!', text2: 'Nova transação salva.' });
+            }
+
+            // Voltar após delay
+            setTimeout(() => navigation.goBack(), 1000);
+
+        } catch (error: any) {
+            console.log("Erro ao salvar:", error);
+            const msg = error.response?.data?.message || "Não foi possível salvar.";
+            Alert.alert("Erro", msg);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleDelete = () => {
+    function handleDelete() {
+        if (!transactionToEdit) return;
+
         Alert.alert(
-            "Excluir Transação",
-            "Tem certeza que deseja excluir esta transação?",
+            "Excluir",
+            "Tem certeza que deseja apagar esta transação?",
             [
                 { text: "Cancelar", style: "cancel" },
                 { 
                     text: "Excluir", 
                     style: "destructive", 
-                    onPress: () => {
-                        console.log("Deletando ID:", transactionToEdit?.id);
-                        navigation.goBack();
+                    onPress: async () => {
+                        try {
+                            setIsLoading(true);
+                            await api.delete(`/api/transactions/${transactionToEdit.id}`);
+                            Toast.show({ type: 'success', text1: 'Apagada', text2: 'Transação removida.' });
+                            setTimeout(() => navigation.goBack(), 1000);
+                        } catch (error) {
+                            Alert.alert("Erro", "Não foi possível excluir.");
+                            setIsLoading(false);
+                        }
                     } 
                 }
             ]
         );
     };
 
-    // Formatador de data simples para exibição
-    const formatDate = (date: Date) => {
-        return date.toLocaleDateString('pt-BR');
-    };
+    const formatDate = (d: Date) => d.toLocaleDateString('pt-BR');
 
     return (
         <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={style.container}
         >
-            <ScrollView contentContainerStyle={style.contentContainer}>
+            <ScrollView contentContainerStyle={style.contentContainer} keyboardShouldPersistTaps="handled">
                 <Text style={style.pageTitle}>
                     {isEditing ? "Editar Transação" : "Nova Transação"}
                 </Text>
@@ -109,22 +147,21 @@ export default function Transacao() {
                     <TouchableOpacity 
                         style={[style.typeButton, type === 'RECEITA' && style.activeIncomeButton]} 
                         onPress={() => setType('RECEITA')}
+                        activeOpacity={0.7}
                     >
-                        {/* <FontAwesome name="arrow-up" size={16} color={type === 'RECEITA' ? COLORS.income : COLORS.textSecondary} /> */}
                         <Text style={[style.typeButtonText, type === 'RECEITA' && style.activeIncomeText]}>Receita</Text>
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
                         style={[style.typeButton, type === 'DESPESA' && style.activeExpenseButton]} 
                         onPress={() => setType('DESPESA')}
+                        activeOpacity={0.7}
                     >
-                        {/* <FontAwesome name="arrow-down" size={16} color={type === 'DESPESA' ? COLORS.expense : COLORS.textSecondary} /> */}
                         <Text style={[style.typeButtonText, type === 'DESPESA' && style.activeExpenseText]}>Despesa</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={style.formCard}>
-                    
                     {/* Valor */}
                     <View style={style.inputGroup}>
                         <Text style={style.label}>Valor (R$)</Text>
@@ -146,7 +183,7 @@ export default function Transacao() {
                         <View style={style.inputContainer}>
                             <TextInput
                                 style={style.input}
-                                placeholder="Ex: Almoço, Salário..."
+                                placeholder="Ex: Mercado, Salário..."
                                 placeholderTextColor={COLORS.textSecondary}
                                 value={description}
                                 onChangeText={setDescription}
@@ -154,52 +191,37 @@ export default function Transacao() {
                         </View>
                     </View>
 
-                    {/* Categoria (Placeholder para um Modal/Picker real) */}
+                    {/* Data (Simples, usa data atual) */}
                     <View style={style.inputGroup}>
-                        <Text style={style.label}>Categoria</Text>
-                        <TouchableOpacity 
-                            style={style.selector}
-                            onPress={() => Alert.alert("Todo", "Abrir modal de seleção de categoria")}
-                        >
-                            <Text style={category ? style.selectorText : style.placeholderText}>
-                                {category || "Selecione uma categoria"}
-                            </Text>
-                            <FontAwesome name="chevron-down" size={14} color={COLORS.textSecondary} />
-                        </TouchableOpacity>
-                    </View>
-
-                     {/* Data (Placeholder para DateTimePicker real) */}
-                     <View style={style.inputGroup}>
                         <Text style={style.label}>Data</Text>
-                        <TouchableOpacity 
-                            style={style.selector}
-                            onPress={() => Alert.alert("Todo", "Abrir DateTimePicker")}
-                        >
-                            <Text style={style.selectorText}>
-                                {formatDate(date)}
-                            </Text>
+                        <TouchableOpacity style={style.selector}>
+                            <Text style={style.selectorText}>{formatDate(date)}</Text>
                             <FontAwesome name="calendar" size={16} color={COLORS.textSecondary} />
                         </TouchableOpacity>
                     </View>
-                    
-
                 </View>
 
-                {/* Botões de Ação */}
-                <TouchableOpacity style={style.saveButton} onPress={handleSave}>
-                    <Text style={style.saveButtonText}>Salvar</Text>
+                {/* Botões */}
+                <TouchableOpacity 
+                    style={[style.saveButton, isLoading && { opacity: 0.7 }]} 
+                    onPress={handleSave}
+                    disabled={isLoading}
+                >
+                    {isLoading ? <ActivityIndicator color="#FFF" /> : <Text style={style.saveButtonText}>Salvar</Text>}
                 </TouchableOpacity>
 
                 {isEditing && (
-                    <TouchableOpacity style={style.deleteButton} onPress={handleDelete}>
+                    <TouchableOpacity 
+                        style={[style.deleteButton, isLoading && { opacity: 0.7 }]} 
+                        onPress={handleDelete}
+                        disabled={isLoading}
+                    >
                         <Text style={style.deleteButtonText}>Excluir Transação</Text>
                     </TouchableOpacity>
                 )}
-                
-                
             </ScrollView>
-             <FloatingMenu currentRoute="Transacao" />
+            
+            <FloatingMenu currentRoute="Transacao" />
         </KeyboardAvoidingView>
-       
     );
 }

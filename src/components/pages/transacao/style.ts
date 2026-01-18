@@ -11,18 +11,19 @@ export const COLORS = {
     expense: '#F44336',      // Vermelho para Despesa
     danger: '#D32F2F',       // Para botão de excluir
 };
-// ---------------------------------------------------
 
 export const style = StyleSheet.create({
     container: {
         paddingTop: 16,
         flex: 1,
         backgroundColor: COLORS.background,
-        minHeight: '100%',
     },
     contentContainer: {
         padding: 16,
+        paddingBottom: 40,
     },
+    
+    // Título da Página
     pageTitle: {
         fontSize: 24,
         fontWeight: '700',
@@ -32,6 +33,7 @@ export const style = StyleSheet.create({
         textAlign: 'center',
     },
 
+    // Seletor de Tipo (Receita/Despesa)
     typeSelector: {
         flexDirection: 'row',
         marginBottom: 24,
@@ -54,23 +56,24 @@ export const style = StyleSheet.create({
         fontWeight: '600',
         color: COLORS.textSecondary,
     },
-    // Estados selecionados
+    
+    // Estados Ativos (Selecionados)
     activeIncomeButton: {
-        backgroundColor: 'rgba(76, 175, 80, 0.2)', // Verde translúcido
+        backgroundColor: 'rgba(76, 175, 80, 0.2)', 
         borderColor: COLORS.income,
     },
     activeIncomeText: {
         color: COLORS.income,
     },
     activeExpenseButton: {
-        backgroundColor: 'rgba(244, 67, 54, 0.2)', // Vermelho translúcido
+        backgroundColor: 'rgba(244, 67, 54, 0.2)', 
         borderColor: COLORS.expense,
     },
     activeExpenseText: {
         color: COLORS.expense,
     },
 
-    // --- Formulário ---
+    // Card do Formulário
     formCard: {
         backgroundColor: COLORS.card,
         borderRadius: 12,
@@ -89,7 +92,7 @@ export const style = StyleSheet.create({
         height: 55,
         borderWidth: 1,
         borderColor: COLORS.inputBorder,
-        backgroundColor: COLORS.background,
+        backgroundColor: COLORS.background, // Fundo um pouco mais escuro que o card
         borderRadius: 10,
         justifyContent: 'center',
         paddingHorizontal: 16,
@@ -99,14 +102,12 @@ export const style = StyleSheet.create({
         color: COLORS.textPrimary,
         height: '100%',
     },
-    // Estilo específico para o valor (maior destaque)
     inputValue: {
         fontSize: 24,
         fontWeight: '700',
     },
 
-    // --- Seletores (Data/Categoria) ---
-    // Imitam inputs mas são tocáveis
+    // Seletores (Categoria/Data)
     selector: {
         height: 55,
         borderWidth: 1,
@@ -126,7 +127,7 @@ export const style = StyleSheet.create({
         color: COLORS.textSecondary,
     },
 
-    // --- Botões de Ação ---
+    // Botões de Ação
     saveButton: {
         height: 55,
         backgroundColor: COLORS.primary,
@@ -147,7 +148,6 @@ export const style = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'transparent',
     },
     deleteButtonText: {
         fontSize: 18,
