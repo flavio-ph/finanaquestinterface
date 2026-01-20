@@ -23,7 +23,7 @@ type ParamList = {
         transactionToEdit?: {
             id: number;
             type: 'DESPESA' | 'RECEITA';
-            amount: number; // Backend manda number
+            amount: number;
             description: string;
             date: string;
         };
@@ -43,18 +43,27 @@ export default function Transacao() {
     const [date, setDate] = useState(new Date());
     const [isLoading, setIsLoading] = useState(false);
 
-    // Preenche dados se for Edição
+    // Carregar dados na edição
     useEffect(() => {
         if (transactionToEdit) {
             setType(transactionToEdit.type);
-            setAmount(String(transactionToEdit.amount)); // Converte number para string pro input
+            // Formata o valor numérico para string BR (ex: 12.50 -> "12,50")
+            setAmount(transactionToEdit.amount.toFixed(2).replace('.', ','));
             setDescription(transactionToEdit.description);
-            // Corrige o fuso horário ou usa a string direta YYYY-MM-DD
-            if (transactionToEdit.date) {
-                setDate(new Date(transactionToEdit.date));
-            }
+            // Cria a data ajustando o fuso horário para não exibir o dia anterior errado
+            const parts = transactionToEdit.date.split('-'); // ["2023", "10", "25"]
+            const localDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            setDate(localDate);
         }
     }, [transactionToEdit]);
+
+    // Função para pegar a data local YYYY-MM-DD (Evita erro de fuso horário)
+    const getLocalDateISO = (dateObj: Date) => {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     async function handleSave() {
         Keyboard.dismiss();
@@ -63,41 +72,47 @@ export default function Transacao() {
             return Alert.alert("Atenção", "Preencha o valor e a descrição.");
         }
 
-        // Formatação do valor (troca vírgula por ponto)
+        // 1. Converter "1.200,50" para float 1200.50
         const cleanAmount = amount.replace(/\./g, '').replace(',', '.');
         const numericAmount = parseFloat(cleanAmount);
 
         if (isNaN(numericAmount) || numericAmount <= 0) {
-            return Alert.alert("Erro", "Valor inválido.");
+            return Alert.alert("Valor Inválido", "O valor deve ser maior que zero.");
         }
 
+        // 2. Montar Payload
         const payload = {
-            description,
+            description: description.trim(),
             amount: numericAmount,
-            type,
-            date: date.toISOString().split('T')[0] // YYYY-MM-DD
+            type: type,
+            date: getLocalDateISO(date) // Usa a função segura de data
         };
 
         try {
             setIsLoading(true);
 
             if (isEditing && transactionToEdit) {
-                // EDITAR (PUT)
                 await api.put(`/api/transactions/${transactionToEdit.id}`, payload);
-                Toast.show({ type: 'success', text1: 'Atualizado!', text2: 'Transação alterada com sucesso.' });
+                Toast.show({ type: 'success', text1: 'Atualizado!', text2: 'Transação editada com sucesso.' });
             } else {
-                // CRIAR (POST)
                 await api.post('/api/transactions', payload);
-                Toast.show({ type: 'success', text1: 'Sucesso!', text2: 'Nova transação salva.' });
+                Toast.show({ type: 'success', text1: 'Sucesso!', text2: 'Nova transação registrada.' });
             }
 
-            // Voltar após delay
+            // Voltar para Home após 1 segundo
             setTimeout(() => navigation.goBack(), 1000);
 
         } catch (error: any) {
             console.log("Erro ao salvar:", error);
-            const msg = error.response?.data?.message || "Não foi possível salvar.";
-            Alert.alert("Erro", msg);
+            const serverMessage = error.response?.data?.message;
+            
+            // Tratamento específico de validação (ex: data futura)
+            if (error.response?.status === 400 && error.response?.data?.errors) {
+                const firstError = Object.values(error.response.data.errors)[0];
+                Alert.alert("Erro de Validação", String(firstError));
+            } else {
+                Alert.alert("Erro", serverMessage || "Não foi possível salvar a transação.");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -106,31 +121,25 @@ export default function Transacao() {
     function handleDelete() {
         if (!transactionToEdit) return;
 
-        Alert.alert(
-            "Excluir",
-            "Tem certeza que deseja apagar esta transação?",
-            [
-                { text: "Cancelar", style: "cancel" },
-                { 
-                    text: "Excluir", 
-                    style: "destructive", 
-                    onPress: async () => {
-                        try {
-                            setIsLoading(true);
-                            await api.delete(`/api/transactions/${transactionToEdit.id}`);
-                            Toast.show({ type: 'success', text1: 'Apagada', text2: 'Transação removida.' });
-                            setTimeout(() => navigation.goBack(), 1000);
-                        } catch (error) {
-                            Alert.alert("Erro", "Não foi possível excluir.");
-                            setIsLoading(false);
-                        }
-                    } 
-                }
-            ]
-        );
+        Alert.alert("Excluir", "Deseja realmente apagar esta transação?", [
+            { text: "Cancelar", style: "cancel" },
+            { 
+                text: "Excluir", 
+                style: "destructive", 
+                onPress: async () => {
+                    try {
+                        setIsLoading(true);
+                        await api.delete(`/api/transactions/${transactionToEdit.id}`);
+                        Toast.show({ type: 'success', text1: 'Removido', text2: 'Transação excluída.' });
+                        setTimeout(() => navigation.goBack(), 1000);
+                    } catch (error) {
+                        Alert.alert("Erro", "Não foi possível excluir.");
+                        setIsLoading(false);
+                    }
+                } 
+            }
+        ]);
     };
-
-    const formatDate = (d: Date) => d.toLocaleDateString('pt-BR');
 
     return (
         <KeyboardAvoidingView 
@@ -191,13 +200,13 @@ export default function Transacao() {
                         </View>
                     </View>
 
-                    {/* Data (Simples, usa data atual) */}
+                    {/* Data Fixa (Hoje) */}
                     <View style={style.inputGroup}>
                         <Text style={style.label}>Data</Text>
-                        <TouchableOpacity style={style.selector}>
-                            <Text style={style.selectorText}>{formatDate(date)}</Text>
+                        <View style={style.selector}>
+                            <Text style={style.selectorText}>{date.toLocaleDateString('pt-BR')}</Text>
                             <FontAwesome name="calendar" size={16} color={COLORS.textSecondary} />
-                        </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
 
