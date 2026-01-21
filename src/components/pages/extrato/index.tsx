@@ -1,133 +1,186 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { style, COLORS } from './style';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
 import { FontAwesome } from '@expo/vector-icons';
+import { style, COLORS } from './style';
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
+import api from '../../../services/api';
 
-
-type Transaction = {
-    id: string;
+// Tipagem
+interface TransactionData {
+    id: number;
     description: string;
     amount: number;
     type: 'RECEITA' | 'DESPESA';
-    category: string;
-    date: string; 
-};
-
-const MOCK_DATA: Transaction[] = [
-    { id: '1', description: 'Salário', amount: 5000, type: 'RECEITA', category: 'Renda Fixa', date: '2025-10-05' },
-    { id: '2', description: 'Aluguel', amount: 1200, type: 'DESPESA', category: 'Moradia', date: '2025-10-10' },
-    { id: '3', description: 'Supermercado', amount: 450.50, type: 'DESPESA', category: 'Alimentação', date: '2025-10-12' },
-    { id: '4', description: 'Freelance', amount: 800, type: 'RECEITA', category: 'Renda Extra', date: '2025-10-15' },
-    { id: '5', description: 'Cinema', amount: 120, type: 'DESPESA', category: 'Lazer', date: '2025-10-20' },
-];
-
-type FilterType = 'TODOS' | 'RECEITA' | 'DESPESA';
+    date: string;
+}
 
 export default function Extrato() {
-    const navigation = useNavigation<any>();
-    const [activeFilter, setActiveFilter] = useState<FilterType>('TODOS');
-    const [currentMonth, setCurrentMonth] = useState(new Date()); // Mês atual
+    const navigation = useNavigation<NavigationProp<any>>();
+    
+    const [loading, setLoading] = useState(true);
+    const [allTransactions, setAllTransactions] = useState<TransactionData[]>([]);
+    const [selectedDate, setSelectedDate] = useState(new Date());
 
+    // Carregar dados ao entrar na tela
+    useFocusEffect(
+        useCallback(() => {
+            fetchData();
+        }, [])
+    );
 
-    // Função para formatar moeda
+    async function fetchData() {
+        try {
+            // Só ativa loading visual se a lista estiver vazia (primeira carga)
+            if (allTransactions.length === 0) setLoading(true);
+            
+            const response = await api.get('/api/transactions');
+            setAllTransactions(response.data);
+            
+        } catch (error) {
+            console.log("Erro ao buscar extrato:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // --- LÓGICA DE FILTRO ---
+    const getFilteredTransactions = () => {
+        const selMonth = selectedDate.getMonth();
+        const selYear = selectedDate.getFullYear();
+
+        return allTransactions.filter(t => {
+            const parts = t.date.split('-'); // YYYY-MM-DD
+            // Cria data local segura
+            const tDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            return tDate.getMonth() === selMonth && tDate.getFullYear() === selYear;
+        }).sort((a, b) => {
+            // Ordena por data (mais recente primeiro) e depois por ID
+            return new Date(b.date).getTime() - new Date(a.date).getTime() || b.id - a.id;
+        });
+    };
+
+    const currentTransactions = getFilteredTransactions();
+
+    // --- CÁLCULO DO SALDO DO MÊS (Opcional, mas útil) ---
+    const monthBalance = currentTransactions.reduce((acc, t) => {
+        return t.type === 'RECEITA' ? acc + t.amount : acc - t.amount;
+    }, 0);
+
+    // --- NAVEGAÇÃO ---
+    const handlePrevMonth = () => {
+        const newDate = new Date(selectedDate);
+        newDate.setMonth(newDate.getMonth() - 1);
+        setSelectedDate(newDate);
+    };
+
+    const handleNextMonth = () => {
+        const newDate = new Date(selectedDate);
+        newDate.setMonth(newDate.getMonth() + 1);
+        setSelectedDate(newDate);
+    };
+
+    const handleEdit = (transaction: TransactionData) => {
+        // Navega para a tela de Transação passando os dados para edição
+        // @ts-ignore
+        navigation.navigate('Transacao', { 
+            transactionToEdit: transaction 
+        });
+    };
+
+    // --- FORMATAÇÃO ---
     const formatCurrency = (value: number) => {
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
-    // Função para formatar data curta (DD/MM)
-    const formatDateShort = (dateString: string) => {
-        const date = new Date(dateString);
-        return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const getMonthLabel = () => {
+        const month = selectedDate.toLocaleDateString('pt-BR', { month: 'long' });
+        const year = selectedDate.getFullYear();
+        return `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
     };
 
-    // Lógica de Filtro (Mock)
-    const filteredData = MOCK_DATA.filter(item => {
-        if (activeFilter === 'TODOS') return true;
-        return item.type === activeFilter;
-    });
+    const formatDate = (dateString: string) => {
+        const parts = dateString.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    };
 
-    // Renderização de cada item da lista
-    const renderItem = ({ item }: { item: Transaction }) => {
-        const isIncome = item.type === 'RECEITA';
-        const iconName = isIncome ? 'dollar' : 'tag'; // Ícones simples por enquanto
-        const iconColor = isIncome ? COLORS.income : COLORS.expense;
-        const iconBg = isIncome ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)';
-
+    if (loading) {
         return (
-            <TouchableOpacity 
-                style={style.transactionCard} 
-                onPress={() => navigation.navigate('TransactionForm', { transactionToEdit: item })}
-            >
-                <View style={[style.iconContainer, { backgroundColor: iconBg }]}>
-                    <FontAwesome name={iconName} size={16} color={iconColor} />
-                </View>
-                <View style={style.detailsContainer}>
-                    <Text style={style.description}>{item.description}</Text>
-                    <Text style={style.category}>{item.category}</Text>
-                </View>
-                <View style={style.amountContainer}>
-                    <Text style={[style.amount, { color: iconColor }]}>
-                        {isIncome ? '+ ' : '- '}{formatCurrency(item.amount)}
-                    </Text>
-                    <Text style={style.dateText}>{formatDateShort(item.date)}</Text>
-                </View>
-            </TouchableOpacity>
+            <View style={[style.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
         );
-    };
+    }
 
     return (
         <View style={style.container}>
-            
-            {/* Seletor de Mês */}
-            <View style={style.monthSelector}>
-                <TouchableOpacity style={style.monthNavButton} onPress={() => Alert.alert("Info", "Mês anterior")}>
-                    <FontAwesome name="chevron-left" size={16} color={COLORS.primary} />
-                </TouchableOpacity>
-                <Text style={style.monthLabel}>Outubro 2025</Text>
-                <TouchableOpacity style={style.monthNavButton} onPress={() => Alert.alert("Info", "Próximo mês")}>
-                    <FontAwesome name="chevron-right" size={16} color={COLORS.primary} />
-                </TouchableOpacity>
-            </View>
+            <ScrollView contentContainerStyle={style.contentContainer}>
+                <Text style={style.pageTitle}>Extrato</Text>
 
-            {/* Filtros Rápidos */}
-            <View style={style.filterContainer}>
-                {/* Usando FlatList horizontal para os filtros se houver muitos */}
-                <FlatList
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    data={['TODOS', 'RECEITA', 'DESPESA'] as FilterType[]}
-                    keyExtractor={(item) => item}
-                    renderItem={({ item }) => (
+                {/* Seletor de Mês */}
+                <View style={style.monthSelector}>
+                    <TouchableOpacity style={style.monthNavButton} onPress={handlePrevMonth}>
+                        <FontAwesome name="chevron-left" size={16} color={COLORS.primary} />
+                    </TouchableOpacity>
+                    
+                    <Text style={style.monthLabel}>{getMonthLabel()}</Text>
+                    
+                    <TouchableOpacity style={style.monthNavButton} onPress={handleNextMonth}>
+                        <FontAwesome name="chevron-right" size={16} color={COLORS.primary} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Resumo Rápido */}
+                <View style={style.monthSummary}>
+                    <Text style={style.summaryText}>Balanço do mês:</Text>
+                    <Text style={[style.summaryValue, { color: monthBalance >= 0 ? COLORS.income : COLORS.expense }]}>
+                        {formatCurrency(monthBalance)}
+                    </Text>
+                </View>
+
+                {/* Lista */}
+                {currentTransactions.length === 0 ? (
+                    <View style={style.emptyState}>
+                        <FontAwesome name="file-text-o" size={48} color={COLORS.textSecondary} />
+                        <Text style={style.emptyText}>Sem movimentações neste mês.</Text>
+                    </View>
+                ) : (
+                    currentTransactions.map((t) => (
                         <TouchableOpacity 
-                            style={[style.filterChip, activeFilter === item && style.filterChipActive]}
-                            onPress={() => setActiveFilter(item)}
+                            key={t.id} 
+                            style={style.transactionItem}
+                            onPress={() => handleEdit(t)} // Clique para editar
+                            activeOpacity={0.7}
                         >
-                            <Text style={[style.filterLabel, activeFilter === item && style.filterLabelActive]}>
-                                {item === 'TODOS' ? 'Todos' : item === 'RECEITA' ? 'Receitas' : 'Despesas'}
+                            <View style={[
+                                style.transactionIconContainer, 
+                                t.type === 'DESPESA' ? style.expenseIconBg : style.incomeIconBg
+                            ]}>
+                                <FontAwesome 
+                                    name={t.type === 'DESPESA' ? "cutlery" : "dollar"} 
+                                    size={18} 
+                                    color={t.type === 'DESPESA' ? COLORS.expense : COLORS.income} 
+                                />
+                            </View>
+                            
+                            <View style={style.transactionDetails}>
+                                <Text style={style.transactionDescription}>{t.description}</Text>
+                                <Text style={style.transactionDate}>{formatDate(t.date)}</Text>
+                            </View>
+                            
+                            <Text style={[
+                                style.transactionAmount, 
+                                { color: t.type === 'DESPESA' ? COLORS.expense : COLORS.income }
+                            ]}>
+                                {t.type === 'DESPESA' ? '- ' : '+ '} 
+                                {formatCurrency(t.amount)}
                             </Text>
                         </TouchableOpacity>
-                    )}
-                />
-            </View>
-
-            {/* Lista de Transações */}
-            <FlatList
-                data={filteredData}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                contentContainerStyle={style.listContent}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={() => (
-                    <View style={{ alignItems: 'center', marginTop: 50 }}>
-                        <Text style={{ color: COLORS.textSecondary }}>Nenhuma transação encontrada.</Text>
-                    </View>
-                    
+                    ))
                 )}
-               
-            />
-              <FloatingMenu currentRoute="Extrato" />
+            </ScrollView>
+
+            <FloatingMenu currentRoute="Extrato" />
         </View>
     );
 }

@@ -1,31 +1,26 @@
 import { StyleSheet } from "react-native";
 
-// --- Constantes de Design ---
 export const COLORS = {
-    primary: '#6A1B9A',      // Roxo
-    secondary: '#FDD835',    // Amarelo
-    background: '#121212',   // Fundo principal
-    card: '#1E1E1E',         // Fundo dos cards
+    primary: '#6A1B9A',      
+    secondary: '#FFD54F', 
+    background: '#121212',   
+    card: '#1E1E1E',         
     textPrimary: '#FFFFFF',
     textSecondary: '#B0B0B0',
-    inputBorder: '#333333',
-    income: '#4CAF50',
-    expense: '#F44336',
+    accent: '#00E676',    
     danger: '#D32F2F',
-    goalBlue: '#29B6F6',     // Nova cor para diferenciar Metas de XP
+    inputBg: '#2C2C2C',
+    border: '#333',
+    progressBarBg: '#333'
 };
-// ---------------------------------------------------
 
 export const style = StyleSheet.create({
     container: {
-        paddingTop: 24,
         flex: 1,
         backgroundColor: COLORS.background,
+        paddingTop: 16,
     },
     contentContainer: {
-        padding: 16,
-    },
-    listContent: {
         padding: 16,
         paddingBottom: 80,
     },
@@ -38,14 +33,17 @@ export const style = StyleSheet.create({
         textAlign: 'center',
     },
 
-    // --- Cards de Meta ---
+    // --- Card da Meta ---
     goalCard: {
         backgroundColor: COLORS.card,
         borderRadius: 16,
         padding: 20,
         marginBottom: 16,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        elevation: 4,
     },
-    goalHeader: {
+    cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -53,122 +51,146 @@ export const style = StyleSheet.create({
     },
     goalName: {
         fontSize: 18,
-        fontWeight: '600',
+        fontWeight: 'bold',
         color: COLORS.textPrimary,
+        flex: 1,
     },
-    goalPercentage: {
+    goalStatus: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        overflow: 'hidden',
+    },
+    valuesContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    currentAmount: {
         fontSize: 16,
-        fontWeight: '700',
-        color: COLORS.goalBlue,
+        fontWeight: 'bold',
+        color: COLORS.accent,
     },
-    
-    // Barra de Progresso da Meta
+    targetAmount: {
+        fontSize: 16,
+        color: COLORS.textSecondary,
+    },
     progressBarTrack: {
         height: 10,
-        backgroundColor: '#333',
+        backgroundColor: COLORS.progressBarBg,
         borderRadius: 5,
-        overflow: 'hidden',
         marginBottom: 12,
+        overflow: 'hidden',
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: COLORS.goalBlue,
+        backgroundColor: COLORS.accent,
         borderRadius: 5,
     },
-    
-    goalFooter: {
+    cardFooter: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    goalValues: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-    },
-    currentValue: {
-        color: COLORS.textPrimary,
-        fontWeight: '600',
-    },
-    goalDeadline: {
-        fontSize: 12,
-        color: COLORS.textSecondary,
-        fontStyle: 'italic',
-    },
+    deadlineText: { fontSize: 12, color: COLORS.textSecondary },
+    percentageText: { fontSize: 14, fontWeight: 'bold', color: COLORS.textPrimary },
+    emptyState: { alignItems: 'center', marginTop: 60, opacity: 0.7 },
+    emptyText: { color: COLORS.textSecondary, marginTop: 16, fontSize: 16 },
 
-    // --- Estilos reutilizados do TransactionForm para GoalForm ---
-    // (formCard, inputGroup, label, inputContainer, input, saveButton...)
-    // Você pode reutilizar os mesmos nomes se estiverem no mesmo arquivo style.ts global,
-    // ou copiar aqui se estiver separando por módulos.
-    // Vou assumir que estão disponíveis ou você copiará do TransactionForm.
-    // Adicionando apenas o que for específico se necessário.
-     formCard: {
+    // --- MODAIS E BOTÕES ---
+    addButton: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        zIndex: 10,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: COLORS.card,
-        borderRadius: 12,
-        padding: 20,
-        marginBottom: 24,
-    },
-    inputGroup: {
-        marginBottom: 20,
-    },
-    label: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-        marginBottom: 8,
-    },
-    inputContainer: {
-        height: 55,
-        borderWidth: 1,
-        borderColor: COLORS.inputBorder,
-        backgroundColor: COLORS.background,
-        borderRadius: 10,
         justifyContent: 'center',
-        paddingHorizontal: 16,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
+    },
+    modalContent: {
+        width: '100%',
+        backgroundColor: COLORS.card,
+        borderRadius: 20,
+        padding: 24,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: COLORS.textPrimary,
+        marginBottom: 20,
+        textAlign: 'center'
+    },
+    inputGroup: { marginBottom: 16 },
+    label: { color: COLORS.textSecondary, marginBottom: 8, fontSize: 14 },
     input: {
+        backgroundColor: COLORS.inputBg,
+        borderRadius: 10,
+        padding: 14,
+        color: COLORS.textPrimary,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        fontSize: 16
+    },
+    
+    // --- ESTILO NOVO PARA O BOTÃO DE DATA ---
+    dateButton: {
+        backgroundColor: COLORS.inputBg,
+        borderRadius: 10,
+        padding: 14,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    dateButtonText: {
         fontSize: 16,
         color: COLORS.textPrimary,
-        height: '100%',
     },
-    saveButton: {
-        height: 55,
-        backgroundColor: COLORS.primary,
+    
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 16,
+        gap: 12
+    },
+    buttonCancel: {
+        flex: 1,
+        padding: 16,
         borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    saveButtonText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.textPrimary,
-    },
-    deleteButton: {
-        height: 55,
         borderWidth: 1,
-        borderColor: COLORS.danger,
+        borderColor: COLORS.border,
+        alignItems: 'center'
+    },
+    buttonSave: {
+        flex: 1,
+        padding: 16,
         borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    deleteButtonText: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.danger,
-    },
-    fab: {
-        position: 'absolute',
-        bottom: 30,
-        right: 30,
-        width: 60,
-        height: 60,
         backgroundColor: COLORS.primary,
-        borderRadius: 30,
-        alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        alignItems: 'center'
     },
+    buttonDeposit: {
+        flex: 1,
+        padding: 16,
+        borderRadius: 12,
+        backgroundColor: COLORS.accent,
+        alignItems: 'center'
+    },
+    buttonText: { fontWeight: 'bold', color: COLORS.textPrimary, fontSize: 16 }
 });

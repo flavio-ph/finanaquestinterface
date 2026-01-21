@@ -1,202 +1,210 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { 
     View, 
     Text, 
     TextInput, 
     TouchableOpacity, 
-    Alert, 
-    ActivityIndicator, 
-    ScrollView, 
     KeyboardAvoidingView, 
-    Platform,
-    Keyboard
-} from "react-native";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
-import Toast from 'react-native-toast-message'; // <--- IMPORTANTE: Importar o Toast
-import { style } from "./style";
-import api from "../../../services/api"; 
+    Platform, 
+    ActivityIndicator, 
+    Alert,
+    ScrollView,
+    StatusBar
+} from 'react-native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+
+import { style, COLORS } from './style';
+import api from '../../../services/api';
 
 export default function Cadastro() {
     const navigation = useNavigation<NavigationProp<any>>();
 
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-
-    function irParaLogin() {
-        navigation.navigate("Login");
-    }
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [loading, setLoading] = useState(false);
 
     async function handleRegister() {
-        Keyboard.dismiss(); // Fecha o teclado para o Toast ficar bem visível
+        // Validações básicas
+        if (!name || !email || !password || !confirmPassword) {
+            return Alert.alert('Atenção', 'Preencha todos os campos.');
+        }
 
-        // --- Validações Locais ---
-        if (!firstName || !lastName || !email || !password || !confirmPassword) {
-            return Alert.alert("Atenção", "Preencha todos os campos.");
-        }
         if (password !== confirmPassword) {
-            return Alert.alert("Erro", "As senhas não coincidem.");
+            return Alert.alert('Erro', 'As senhas não coincidem.');
         }
-        if (password.length < 8) {
-            return Alert.alert("Erro", "A senha deve ter pelo menos 8 caracteres.");
+
+        if (password.length < 6) {
+            return Alert.alert('Senha Fraca', 'A senha deve ter pelo menos 6 caracteres.');
         }
 
         try {
-            setIsLoading(true);
+            setLoading(true);
 
-            const payload = {
-                name: `${firstName} ${lastName}`.trim(),
-                email: email.trim(),
-                password: password
-            };
-
-            await api.post('/api/auth/register', payload);
-
-            // --- SUCESSO COM TOAST ---
-            Toast.show({
-                type: 'success', // Define a cor verde (sucesso)
-                text1: 'Cadastro realizado! 🎉',
-                text2: 'Redirecionando para o login...',
-                position: 'top',
-                visibilityTime: 2000, // Fica 2 segundos na tela
+            // Envia para o Backend (endpoint padrão /users)
+            await api.post('/users', {
+                name,
+                email,
+                password,
+                level: 1, // Começa no nível 1
+                experiencePoints: 0
             });
 
-            // Aguarda o tempo do Toast e navega
+            Toast.show({
+                type: 'success',
+                text1: 'Conta Criada!',
+                text2: 'Faça login para começar sua jornada.'
+            });
+
+            // Redireciona para o Login após 1.5s
             setTimeout(() => {
-                navigation.navigate("Login");
-            }, 2000);
+                navigation.navigate('Login');
+            }, 1500);
 
         } catch (error: any) {
-            console.log("Erro capturado:", error.message);
-            
-            // Tratamento de erros vindo do Backend
-            if (error.response) {
-                const data = error.response.data;
-                // Erro de Validação (@Valid)
-                if (error.response.status === 400 && data.errors) {
-                    const firstErrorKey = Object.keys(data.errors)[0];
-                    return Alert.alert("Dados Inválidos", data.errors[firstErrorKey]);
-                }
-                // Erro de Negócio (ex: Email duplicado)
-                if (data.message) {
-                    return Alert.alert("Atenção", data.message);
-                }
-            }
-            
-            Alert.alert("Erro", "Não foi possível realizar o cadastro.");
+            console.log(error);
+            const msg = error.response?.data?.message || 'Não foi possível criar a conta.';
+            Alert.alert('Erro no Cadastro', msg);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     }
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={{ flex: 1 }}
-        >
-            <ScrollView 
-                contentContainerStyle={{ flexGrow: 1 }}
-                keyboardShouldPersistTaps="always" 
-            >
-                <View style={style.container}>
+        <View style={style.container}>
+            <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
-                    {/* Header */}
-                    <View style={style.header}>
-                        <Text style={style.title}>Olá, seja bem-vindo!</Text>
-                        <Text style={style.subtext}>Cadastre-se para continuar</Text>
+            {/* --- EFEITOS DE FUNDO --- */}
+            <LinearGradient
+                colors={[COLORS.secondary, 'transparent']}
+                start={{ x: 0.8, y: 0.1 }}
+                end={{ x: 0.2, y: 0.8 }}
+                style={style.backgroundEffectTopRight}
+            />
+             <LinearGradient
+                colors={[COLORS.primary, 'transparent']}
+                start={{ x: 0.2, y: 0.8 }}
+                end={{ x: 0.8, y: 0.1 }}
+                style={style.backgroundEffectBottomLeft}
+            />
+            {/* ------------------------ */}
+
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+            >
+                <ScrollView contentContainerStyle={style.contentContainer} showsVerticalScrollIndicator={false}>
+                    
+                    {/* Cabeçalho */}
+                    <View style={style.headerContainer}>
+                        <Text style={style.title}>Crie sua Conta</Text>
+                        <Text style={style.subtitle}>Junte-se à guilda FinanQuest!</Text>
                     </View>
 
-                    <View style={style.card}>
-                        <Text style={style.title}>Cadastre-se</Text>
-
+                    {/* Formulário */}
+                    <View style={style.formContainer}>
+                        
                         {/* Nome */}
                         <View style={style.inputGroup}>
-                            <Text style={style.label}>Nome</Text>
-                            <TextInput 
-                                style={style.input} 
-                                placeholderTextColor="#999" 
-                                value={firstName} 
-                                onChangeText={setFirstName} 
-                            />
-                        </View>
-
-                        {/* Sobrenome */}
-                        <View style={style.inputGroup}>
-                            <Text style={style.label}>Sobrenome</Text>
-                            <TextInput 
-                                style={style.input} 
-                                placeholderTextColor="#999" 
-                                value={lastName} 
-                                onChangeText={setLastName} 
-                            />
+                            <Text style={style.label}>Nome de Jogador</Text>
+                            <View style={style.inputContainer}>
+                                <FontAwesome name="user" size={18} color={COLORS.textSecondary} style={style.inputIcon} />
+                                <TextInput
+                                    style={style.input}
+                                    placeholder="Seu nome"
+                                    placeholderTextColor="#555"
+                                    value={name}
+                                    onChangeText={setName}
+                                />
+                            </View>
                         </View>
 
                         {/* Email */}
                         <View style={style.inputGroup}>
                             <Text style={style.label}>Email</Text>
-                            <TextInput 
-                                style={style.input} 
-                                placeholderTextColor="#999" 
-                                keyboardType="email-address" 
-                                autoCapitalize="none" 
-                                value={email} 
-                                onChangeText={setEmail} 
-                            />
+                            <View style={style.inputContainer}>
+                                <FontAwesome name="envelope" size={16} color={COLORS.textSecondary} style={style.inputIcon} />
+                                <TextInput
+                                    style={style.input}
+                                    placeholder="seu@email.com"
+                                    placeholderTextColor="#555"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                />
+                            </View>
                         </View>
 
                         {/* Senha */}
                         <View style={style.inputGroup}>
                             <Text style={style.label}>Senha</Text>
-                            <TextInput 
-                                style={style.input} 
-                                placeholderTextColor="#999" 
-                                secureTextEntry 
-                                value={password} 
-                                onChangeText={setPassword} 
-                            />
+                            <View style={style.inputContainer}>
+                                <FontAwesome name="lock" size={20} color={COLORS.textSecondary} style={style.inputIcon} />
+                                <TextInput
+                                    style={style.input}
+                                    placeholder="********"
+                                    placeholderTextColor="#555"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry
+                                />
+                            </View>
                         </View>
 
-                        {/* Confirmar Senha */}
-                        <View style={style.inputGroup}>
-                            <Text style={style.label}>Confirme a senha</Text>
-                            <TextInput 
-                                style={style.input} 
-                                placeholder="••••••••"
-                                placeholderTextColor="#999" 
-                                secureTextEntry 
-                                value={confirmPassword} 
-                                onChangeText={setConfirmPassword} 
-                            />
+                         {/* Confirmar Senha */}
+                         <View style={style.inputGroup}>
+                            <Text style={style.label}>Confirmar Senha</Text>
+                            <View style={style.inputContainer}>
+                                <FontAwesome name="check-circle" size={18} color={COLORS.textSecondary} style={style.inputIcon} />
+                                <TextInput
+                                    style={style.input}
+                                    placeholder="********"
+                                    placeholderTextColor="#555"
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
+                                    secureTextEntry
+                                />
+                            </View>
                         </View>
 
-                        {/* Botão de Cadastro */}
-                        <TouchableOpacity
-                            style={[style.button, isLoading && { opacity: 0.7 }]}
+                        {/* Botão Registrar */}
+                        <TouchableOpacity 
+                            style={[style.buttonContainer, loading && { opacity: 0.7 }]} 
                             onPress={handleRegister}
-                            disabled={isLoading}
+                            disabled={loading}
                             activeOpacity={0.8}
                         >
-                            {isLoading ? (
-                                <ActivityIndicator color="#FFF" />
-                            ) : (
-                                <Text style={style.buttonText}>Cadastrar</Text>
-                            )}
+                            <LinearGradient
+                                colors={[COLORS.primary, '#4A148C']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={style.gradientButton}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="#FFF" />
+                                ) : (
+                                    <Text style={style.buttonText}>Cadastrar</Text>
+                                )}
+                            </LinearGradient>
                         </TouchableOpacity>
 
-                        {/* Footer */}
-                        <View style={style.footer}>
-                            <Text style={style.footerText}>Já possui uma conta? </Text>
-                            <TouchableOpacity onPress={irParaLogin}>
-                                <Text style={style.footerLink}>Faça login</Text>
-                            </TouchableOpacity>
-                        </View>
-
                     </View>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+
+                    {/* Rodapé */}
+                    <View style={style.footerContainer}>
+                        <Text style={style.footerText}>Já tem uma conta?</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <Text style={style.linkText}>Entrar</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </View>
     );
 }

@@ -1,121 +1,276 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { style, COLORS } from './style';
+import React, { useState, useCallback } from 'react';
+import { 
+    View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, 
+    Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard 
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { FontAwesome } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+
+import { style, COLORS } from './style';
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
+import api from '../../../services/api';
 
-// Tipo de dados para Desafio
-type ChallengeStatus = 'disponivel' | 'ativo' | 'concluido';
-type ChallengeType = 'semanal' | 'mensal';
+interface Challenge {
+    id: number;
+    nome: string;
+    descriptions: string;
+    startDate: string;
+    endDate: string;
+    rewardExperiencePoints: number;
+}
 
-type Challenge = {
-    id: string;
-    name: string;
-    description: string;
-    icon: keyof typeof FontAwesome.glyphMap;
-    type: ChallengeType;
-    rewardXp: number;
-    status: ChallengeStatus;
-};
+export default function Desafios() {
+    const [loading, setLoading] = useState(true);
+    const [challenges, setChallenges] = useState<Challenge[]>([]);
+    const [saving, setSaving] = useState(false);
 
-// Dados Mockados
-const MOCK_CHALLENGES: Challenge[] = [
-    { id: '1', name: 'Economia Expressa', description: 'Gaste R$ 50,00 a menos em Alimentação esta semana.', icon: 'cutlery', type: 'semanal', rewardXp: 100, status: 'disponivel' },
-    { id: '2', name: 'Check-in Diário', description: 'Registre transações por 7 dias seguidos.', icon: 'calendar-check-o', type: 'semanal', rewardXp: 150, status: 'ativo' },
-    { id: '3', name: 'Zero Lazer Supérfluo', description: 'Não gaste com Lazer esta semana.', icon: 'film', type: 'semanal', rewardXp: 200, status: 'concluido' },
-    { id: '4', name: 'Meta de Poupança Mensal', description: 'Economize R$ 300,00 este mês.', icon: 'bank', type: 'mensal', rewardXp: 500, status: 'disponivel' },
-    { id: '5', name: 'Foco no Supermercado', description: 'Mantenha os gastos de Supermercado abaixo de R$ 600.', icon: 'shopping-basket', type: 'mensal', rewardXp: 400, status: 'ativo' },
-];
+    // Estados do Modal
+    const [modalVisible, setModalVisible] = useState(false);
+    const [nome, setNome] = useState('');
+    const [descricao, setDescricao] = useState('');
+    const [xp, setXp] = useState('');
+    const [duracao, setDuracao] = useState(''); // Dias
 
-// Componente de Card reutilizável
-const ChallengeCard = ({ challenge }: { challenge: Challenge }) => {
-    
-    // Estado do botão baseado no status do desafio
-    let buttonStyle = style.actionButton;
-    let buttonTextStyle = style.actionButtonText;
-    let buttonText = "Iniciar";
+    useFocusEffect(
+        useCallback(() => {
+            fetchChallenges();
+        }, [])
+    );
 
-    if (challenge.status === 'ativo') {
-        buttonStyle = style.activeButton;
-        buttonTextStyle = style.activeButtonText;
-        buttonText = "Em Andamento";
-    } else if (challenge.status === 'concluido') {
-        buttonStyle = style.completedButton;
-        buttonTextStyle = style.completedButtonText;
-        buttonText = "Concluído";
+    async function fetchChallenges() {
+        try {
+            if (challenges.length === 0) setLoading(true);
+            const response = await api.get('/api/challenges');
+            setChallenges(response.data);
+        } catch (error) {
+            console.log("Erro ao buscar desafios:", error);
+        } finally {
+            setLoading(false);
+        }
     }
 
-    const handlePress = () => {
-        if (challenge.status === 'disponivel') {
-            Alert.alert("Novo Desafio", `Deseja iniciar o desafio "${challenge.name}"?`);
-            // Aqui você mudaria o estado (ex: setChallengeStatus(id, 'ativo'))
-        } else {
-             Alert.alert(challenge.name, `Recompensa: ${challenge.rewardXp} XP`);
+    // --- Lógica de Cadastro ---
+    async function handleCreateChallenge() {
+        if (!nome || !descricao || !xp || !duracao) {
+            return Alert.alert("Atenção", "Preencha todos os campos.");
         }
+
+        const xpValue = parseInt(xp);
+        const diasValue = parseInt(duracao);
+
+        if (isNaN(xpValue) || isNaN(diasValue)) {
+            return Alert.alert("Erro", "XP e Duração devem ser números.");
+        }
+
+        setSaving(true);
+        Keyboard.dismiss();
+
+        // Calculando datas automaticamente
+        const today = new Date();
+        const endDate = new Date();
+        endDate.setDate(today.getDate() + diasValue);
+
+        const formatDateISO = (d: Date) => d.toISOString().split('T')[0];
+
+        const payload = {
+            nome,
+            descriptions: descricao,
+            startDate: formatDateISO(today),
+            endDate: formatDateISO(endDate),
+            rewardExperiencePoints: xpValue
+        };
+
+        try {
+            await api.post('/api/challenges', payload);
+            
+            Toast.show({
+                type: 'success',
+                text1: 'Desafio Criado!',
+                text2: `${nome} foi adicionado.`
+            });
+
+            setModalVisible(false);
+            resetForm();
+            fetchChallenges(); // Recarrega a lista
+
+        } catch (error) {
+            console.log(error);
+            Alert.alert("Erro", "Não foi possível criar o desafio.");
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    function resetForm() {
+        setNome('');
+        setDescricao('');
+        setXp('');
+        setDuracao('');
+    }
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        const parts = dateString.split('-');
+        return `${parts[2]}/${parts[1]}`;
     };
 
-    return (
-        <View style={style.challengeCard}>
-            <View style={style.cardHeader}>
-                <View style={[style.iconContainer, challenge.status === 'concluido' && { borderColor: COLORS.income, borderWidth: 1 }]}>
-                    <FontAwesome 
-                        name={challenge.icon} 
-                        size={24} 
-                        color={challenge.status === 'concluido' ? COLORS.income : COLORS.primary} 
-                    />
-                </View>
-                <View style={style.headerText}>
-                    <Text style={style.challengeName}>{challenge.name}</Text>
-                </View>
+    if (loading) {
+        return (
+            <View style={[style.container, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
-
-            <Text style={style.challengeDescription}>{challenge.description}</Text>
-
-            <View style={style.cardFooter}>
-                <View style={style.rewardContainer}>
-                    <Text style={style.rewardLabel}>Recompensa</Text>
-                    <Text style={style.rewardValue}>{challenge.rewardXp} XP</Text>
-                </View>
-
-                <TouchableOpacity 
-                    style={buttonStyle}
-                    onPress={handlePress}
-                    disabled={challenge.status === 'concluido'}
-                >
-                    <Text style={buttonTextStyle}>{buttonText}</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-};
-
-
-export default function Challenges() {
-    
-    // Filtra os desafios por tipo
-    const weeklyChallenges = MOCK_CHALLENGES.filter(c => c.type === 'semanal');
-    const monthlyChallenges = MOCK_CHALLENGES.filter(c => c.type === 'mensal');
+        );
+    }
 
     return (
         <View style={style.container}>
+            {/* Botão de Adicionar (Topo Direito) */}
+            <TouchableOpacity style={style.addButton} onPress={() => setModalVisible(true)}>
+                <FontAwesome name="plus" size={20} color={COLORS.primary} />
+            </TouchableOpacity>
+
             <ScrollView contentContainerStyle={style.contentContainer}>
-                <Text style={style.pageTitle}>Central de Desafios</Text>
+                <Text style={style.pageTitle}>Desafios</Text>
+                <Text style={style.sectionTitle}>Disponíveis</Text>
 
-                {/* Seção Semanal */}
-                <Text style={style.sectionTitle}>Desafios Semanais</Text>
-                {weeklyChallenges.map(challenge => (
-                    <ChallengeCard key={challenge.id} challenge={challenge} />
-                ))}
+                {challenges.length === 0 ? (
+                    <View style={style.emptyState}>
+                        <FontAwesome name="trophy" size={48} color={COLORS.textSecondary} />
+                        <Text style={style.emptyText}>Sem desafios ativos.</Text>
+                        <TouchableOpacity onPress={() => setModalVisible(true)}>
+                            <Text style={{ color: COLORS.primary, marginTop: 10, fontWeight: 'bold' }}>
+                                Criar o primeiro desafio
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    challenges.map((item) => (
+                        <TouchableOpacity key={item.id} style={style.challengeCard} activeOpacity={0.9}>
+                            <View style={style.cardHeader}>
+                                <View style={style.iconContainer}>
+                                    <FontAwesome 
+                                        name={item.rewardExperiencePoints >= 500 ? "star" : "shield"} 
+                                        size={24} 
+                                        color={COLORS.secondary} 
+                                    />
+                                </View>
+                                <View style={style.headerText}>
+                                    <Text style={style.challengeName}>{item.nome}</Text>
+                                    <Text style={style.challengeReward}>+{item.rewardExperiencePoints} XP</Text>
+                                </View>
+                            </View>
 
-                {/* Seção Mensal */}
-                <Text style={style.sectionTitle}>Desafios Mensais</Text>
-                {monthlyChallenges.map(challenge => (
-                    <ChallengeCard key={challenge.id} challenge={challenge} />
-                ))}
-              <FloatingMenu currentRoute="Challenges" />
+                            <Text style={style.description}>{item.descriptions}</Text>
+                            
+                            <View style={style.footerRow}>
+                                <View style={style.dateTag}>
+                                    <FontAwesome name="calendar" size={12} color={COLORS.textSecondary} />
+                                    <Text style={style.dateText}> Até {formatDate(item.endDate)}</Text>
+                                </View>
+                                <View style={style.statusBadge}>
+                                    <Text style={style.statusText}>Ativo</Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    ))
+                )}
             </ScrollView>
 
-          
+            <FloatingMenu currentRoute="Desafios" />
+
+            {/* MODAL DE CADASTRO */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={style.modalOverlay}
+                >
+                    <View style={style.modalContent}>
+                        <Text style={style.modalTitle}>Novo Desafio</Text>
+
+                        {/* Nome */}
+                        <View style={style.inputGroup}>
+                            <Text style={style.label}>Título</Text>
+                            <TextInput
+                                style={style.input}
+                                placeholder="Ex: Semana Econômica"
+                                placeholderTextColor="#666"
+                                value={nome}
+                                onChangeText={setNome}
+                            />
+                        </View>
+
+                        {/* Descrição */}
+                        <View style={style.inputGroup}>
+                            <Text style={style.label}>Descrição / Regra</Text>
+                            <TextInput
+                                style={style.input}
+                                placeholder="Ex: Não gaste com delivery..."
+                                placeholderTextColor="#666"
+                                value={descricao}
+                                onChangeText={setDescricao}
+                                multiline
+                            />
+                        </View>
+
+                        {/* XP e Duração (Lado a Lado) */}
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                            <View style={[style.inputGroup, { flex: 1 }]}>
+                                <Text style={style.label}>XP (Recompensa)</Text>
+                                <TextInput
+                                    style={style.input}
+                                    placeholder="500"
+                                    placeholderTextColor="#666"
+                                    keyboardType="numeric"
+                                    value={xp}
+                                    onChangeText={setXp}
+                                />
+                            </View>
+                            <View style={[style.inputGroup, { flex: 1 }]}>
+                                <Text style={style.label}>Duração (Dias)</Text>
+                                <TextInput
+                                    style={style.input}
+                                    placeholder="7"
+                                    placeholderTextColor="#666"
+                                    keyboardType="numeric"
+                                    value={duracao}
+                                    onChangeText={setDuracao}
+                                />
+                            </View>
+                        </View>
+
+                        {/* Botões */}
+                        <View style={style.modalActions}>
+                            <TouchableOpacity 
+                                style={style.buttonCancel} 
+                                onPress={() => {
+                                    setModalVisible(false);
+                                    resetForm();
+                                }}
+                            >
+                                <Text style={[style.buttonText, { color: COLORS.textSecondary }]}>Cancelar</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity 
+                                style={[style.buttonSave, saving && { opacity: 0.7 }]} 
+                                onPress={handleCreateChallenge}
+                                disabled={saving}
+                            >
+                                {saving ? (
+                                    <ActivityIndicator color="#FFF" />
+                                ) : (
+                                    <Text style={style.buttonText}>Criar</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </View>
     );
 }

@@ -1,14 +1,15 @@
 import React, { useContext, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation, NavigationProp } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons'; 
+import { LinearGradient } from 'expo-linear-gradient'; // Importando Gradiente
 
 import { style, COLORS } from './style'; 
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
 import { AuthContext } from '../../../services/authContext';
 import api from '../../../services/api';
 
-// Definição dos tipos vindos da API
+// Definição dos tipos
 interface TransactionData {
     id: number;
     description: string;
@@ -25,19 +26,16 @@ interface UserProfile {
 
 export default function Home() {
     const navigation = useNavigation<NavigationProp<any>>();
-    const { user } = useContext(AuthContext); // Pega o ID do utilizador logado
+    const { user } = useContext(AuthContext);
 
-    // Estados para armazenar dados da API
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [transactions, setTransactions] = useState<TransactionData[]>([]);
     
-    // Estados calculados
     const [balance, setBalance] = useState(0);
     const [monthlyIncome, setMonthlyIncome] = useState(0);
     const [monthlyExpense, setMonthlyExpense] = useState(0);
     const [loading, setLoading] = useState(true);
 
-    // useFocusEffect: Recarrega os dados sempre que a tela ganha foco (ex: voltou de "Nova Transação")
     useFocusEffect(
         useCallback(() => {
             fetchData();
@@ -46,58 +44,48 @@ export default function Home() {
 
     async function fetchData() {
         try {
-            setLoading(true);
+            if (!profile) setLoading(true);
 
-            // 1. Busca dados frescos do utilizador (XP e Nível atualizados)
             if (user?.id) {
                 const userRes = await api.get(`/users/${user.id}`);
                 setProfile(userRes.data);
             }
 
-            // 2. Busca todas as transações
             const transRes = await api.get('/api/transactions');
             const list: TransactionData[] = transRes.data;
 
-            // 3. Cálculos Financeiros (Saldo Total e Resumo do Mês)
             let totalBalance = 0;
             let mIncome = 0;
             let mExpense = 0;
             
-            const currentMonth = new Date().getMonth(); // 0 = Janeiro, 1 = Fevereiro...
+            const currentMonth = new Date().getMonth(); 
             const currentYear = new Date().getFullYear();
 
-            // Ordena transações: Mais recentes primeiro
             const sortedList = list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
             sortedList.forEach(item => {
                 const val = Number(item.amount);
                 const itemDate = new Date(item.date);
 
-                // Cálculo do Saldo Geral
                 if (item.type === 'RECEITA') {
                     totalBalance += val;
                 } else {
                     totalBalance -= val;
                 }
 
-                // Cálculo do Mês Atual
                 if (itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear) {
-                    if (item.type === 'RECEITA') {
-                        mIncome += val;
-                    } else {
-                        mExpense += val;
-                    }
+                    if (item.type === 'RECEITA') mIncome += val;
+                    else mExpense += val;
                 }
             });
 
-            setTransactions(sortedList.slice(0, 5)); // Pega apenas as 5 últimas para exibir
+            setTransactions(sortedList.slice(0, 5)); 
             setBalance(totalBalance);
             setMonthlyIncome(mIncome);
             setMonthlyExpense(mExpense);
 
         } catch (error) {
             console.log("Erro ao carregar Home:", error);
-            // Opcional: Toast de erro
         } finally {
             setLoading(false);
         }
@@ -108,12 +96,10 @@ export default function Home() {
         navigation.navigate(rota);
     }
 
-    // Função auxiliar para formatar dinheiro
     const formatCurrency = (value: number) => {
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
-    // Cálculos de XP (Exemplo: 100 * Nível)
     const xpToNextLevel = (profile?.level || 1) * 100;
     const currentXP = profile?.experiencePoints || 0;
     const progressPercent = Math.min((currentXP / xpToNextLevel) * 100, 100);
@@ -128,125 +114,157 @@ export default function Home() {
 
     return (
         <View style={style.container}>
-            <ScrollView contentContainerStyle={style.contentContainer}>
+            <ScrollView contentContainerStyle={style.contentContainer} showsVerticalScrollIndicator={false}>
                 
-                {/* HEADER */}
+                {/* --- HEADER --- */}
                 <View style={style.header}>
                     <View style={style.userProfile}>
                         <TouchableOpacity onPress={() => navegarPara('Perfil')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                             <View style={style.fotoperfil}>
-                                {/* Placeholder ou Imagem real se tiver no futuro */}
-                                <FontAwesome name="user-circle" size={36} color={COLORS.textSecondary} />
+                             <View style={style.avatarContainer}>
+                                <FontAwesome name="user" size={24} color={COLORS.primary} />
                              </View>
-                             <View style={style.nomeNivel}>
-                                <Text style={style.welcomeText}>Olá, {profile?.name.split(' ')[0]}</Text>
-                                <Text style={style.userLevel}>Nível {profile?.level}</Text>
+                             <View style={style.greetingContainer}>
+                                <Text style={style.welcomeText}>Bem-vindo de volta,</Text>
+                                <Text style={style.userName}>
+                                    {profile?.name ? profile.name.split(' ')[0] : "Visitante"}
+                                </Text>
+                                <View style={style.userLevelBadge}>
+                                    <Text style={style.userLevelText}>LVL {profile?.level || 1}</Text>
+                                </View>
                              </View>
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={style.xpStatus} onPress={() => navegarPara('Conquistas')} activeOpacity={0.7}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <Text style={style.xpLabel}>Progresso (XP)</Text>
+                    {/* Barra de XP */}
+                    <TouchableOpacity style={style.xpContainer} onPress={() => navegarPara('Conquistas')} activeOpacity={0.7}>
+                        <View style={style.xpLabelRow}>
+                            <Text style={style.xpLabel}>RANK</Text>
                             <FontAwesome name="trophy" size={12} color={COLORS.secondary} />
                         </View>
-                        <View style={style.xpBarTrack}>
-                            <View style={[style.xpBarFill, { width: `${progressPercent}%` }]} />
+                        <View style={style.xpTrack}>
+                            {/* Gradiente na barra de XP */}
+                            <LinearGradient
+                                colors={[COLORS.secondary, '#FFAB00']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={[style.xpFill, { width: `${progressPercent}%` }]}
+                            />
                         </View>
                         <Text style={style.xpValue}>{currentXP} / {xpToNextLevel} XP</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* CONTEÚDO */}
-                <View>
-                    {/* Card Saldo */}
-                    <View style={style.card}>
-                        <Text style={style.cardTitle}>Saldo Atual</Text>
-                        <Text style={style.balanceAmount}>{formatCurrency(balance)}</Text>
-                        <View style={style.financialOverview}>
-                            <View style={style.overviewItem}>
-                                <Text style={style.overviewLabel}>Receitas (Mês)</Text>
-                                <Text style={[style.overviewAmount, style.incomeAmount]}>
-                                    {formatCurrency(monthlyIncome)}
-                                </Text>
+                {/* --- CARD DE SALDO (GRADIENTE) --- */}
+                <LinearGradient
+                    colors={[COLORS.primary, '#311B92']} // Roxo para Azul Profundo
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={style.balanceCard}
+                >
+                    <Text style={style.balanceLabel}>Saldo Total</Text>
+                    <Text style={style.balanceAmount}>{formatCurrency(balance)}</Text>
+                    
+                    <View style={style.financeRow}>
+                        {/* Receita */}
+                        <View style={style.financeItem}>
+                            <View style={style.financeIconBox}>
+                                <FontAwesome name="arrow-up" size={14} color={COLORS.accent} />
                             </View>
-                            <View style={style.overviewItem}>
-                                <Text style={style.overviewLabel}>Despesas (Mês)</Text>
-                                <Text style={[style.overviewAmount, style.expenseAmount]}>
-                                    {formatCurrency(monthlyExpense)}
-                                </Text>
+                            <View style={style.financeInfo}>
+                                <Text style={style.financeLabel}>Entradas</Text>
+                                <Text style={style.financeValue}>{formatCurrency(monthlyIncome)}</Text>
+                            </View>
+                        </View>
+
+                        {/* Despesa */}
+                        <View style={style.financeItem}>
+                            <View style={style.financeIconBox}>
+                                <FontAwesome name="arrow-down" size={14} color="#FF5252" />
+                            </View>
+                            <View style={style.financeInfo}>
+                                <Text style={style.financeLabel}>Saídas</Text>
+                                <Text style={style.financeValue}>{formatCurrency(monthlyExpense)}</Text>
                             </View>
                         </View>
                     </View>
+                </LinearGradient>
 
-                    {/* Card Desafios (Mantido estático por enquanto, pois não há endpoint no controller) */}
-                    <View style={style.card}>
-                        <View style={style.cardHeader}>
-                            <Text style={style.cardTitle}>Desafios Ativos</Text>
-                            <TouchableOpacity style={style.seeAllButton} onPress={() => navegarPara('Desafios')}>
-                                <Text style={style.seeAllText}>Ver todos</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View style={style.challengeItem}>
-                            <FontAwesome name="shopping-cart" size={24} color={COLORS.primary} style={style.challengeIcon} />
-                            <View style={style.challengeDetails}>
-                                <Text style={style.challengeDescription}>Gastar menos de R$ 500 em "Alimentação"</Text>
-                                <View style={style.challengeProgressBar}>
-                                    <View style={[style.challengeProgressFill, { width: '80%' }]} />
-                                </View>
-                                <Text style={style.challengeStatus}>R$ 400,00 / R$ 500,00</Text>
-                            </View>
-                        </View>
+                {/* --- QUESTS (DESAFIOS) --- */}
+                <View style={style.sectionHeader}>
+                    <Text style={style.sectionTitle}>Quest Ativa</Text>
+                    <TouchableOpacity style={style.seeAllButton} onPress={() => navegarPara('Desafios')}>
+                        <Text style={style.seeAllText}>Ver todas</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={style.questCard} onPress={() => navegarPara('Desafios')} activeOpacity={0.8}>
+                    <View style={style.questIconContainer}>
+                         <FontAwesome name="shield" size={24} color={COLORS.primary} />
                     </View>
-
-                    {/* Card Transações */}
-                    <View style={style.card}>
-                        <View style={style.cardHeader}>
-                            <Text style={style.cardTitle}>Transações Recentes</Text>
-                            <TouchableOpacity style={style.seeAllButton} onPress={() => navegarPara('Extrato')}>
-                                <Text style={style.seeAllText}>Ver extrato</Text>
-                            </TouchableOpacity>
-                        </View>
+                    <View style={style.questContent}>
+                        <Text style={style.questTitle}>Economia de Guerreiro</Text>
+                        <Text style={style.questDesc}>Gaste menos de R$ 500 em Alimentação</Text>
                         
-                        {transactions.length === 0 ? (
-                            <Text style={{color: COLORS.textSecondary, fontStyle: 'italic', padding: 10}}>
-                                Nenhuma transação recente.
-                            </Text>
-                        ) : (
-                            transactions.map((t) => (
-                                <View key={t.id} style={style.transactionItem}>
-                                    <View style={[
-                                        style.transactionIconContainer, 
-                                        t.type === 'DESPESA' ? style.expenseIconBg : style.incomeIconBg
-                                    ]}>
-                                        <FontAwesome 
-                                            name={t.type === 'DESPESA' ? "cutlery" : "dollar"} 
-                                            size={18} 
-                                            color={t.type === 'DESPESA' ? COLORS.expense : COLORS.income} 
-                                        />
-                                    </View>
-                                    <View style={style.transactionDetails}>
-                                        <Text style={style.transactionDescription}>{t.description}</Text>
-                                        <Text style={style.transactionCategory}>
-                                            {new Date(t.date).toLocaleDateString('pt-BR')}
-                                        </Text>
-                                    </View>
-                                    <Text style={[
-                                        style.transactionAmount, 
-                                        { color: t.type === 'DESPESA' ? COLORS.expense : COLORS.income }
-                                    ]}>
-                                        {t.type === 'DESPESA' ? '- ' : '+ '} 
-                                        {formatCurrency(t.amount)}
+                        {/* Barra de Progresso da Quest */}
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                             <View style={{flex: 1, height: 6, backgroundColor: '#333', borderRadius: 3}}>
+                                <View style={{width: '80%', height: '100%', backgroundColor: COLORS.accent, borderRadius: 3}} />
+                             </View>
+                             <Text style={{fontSize: 10, color: COLORS.accent, fontWeight: 'bold'}}>80%</Text>
+                        </View>
+                    </View>
+                </TouchableOpacity>
+
+                {/* --- TRANSAÇÕES RECENTES --- */}
+                <View style={style.sectionHeader}>
+                    <Text style={style.sectionTitle}>Últimas Transações</Text>
+                    <TouchableOpacity style={style.seeAllButton} onPress={() => navegarPara('Extrato')}>
+                        <Text style={style.seeAllText}>Ver extrato</Text>
+                    </TouchableOpacity>
+                </View>
+                
+                <View style={style.transactionList}>
+                    {transactions.length === 0 ? (
+                        <Text style={{color: COLORS.textSecondary, fontStyle: 'italic', padding: 10}}>
+                            Nenhuma transação recente.
+                        </Text>
+                    ) : (
+                        transactions.map((t) => (
+                            <View key={t.id} style={style.transactionItem}>
+                                <View style={[
+                                    style.transactionIcon, 
+                                    { backgroundColor: t.type === 'DESPESA' ? 'rgba(244, 67, 54, 0.1)' : 'rgba(76, 175, 80, 0.1)' }
+                                ]}>
+                                    <FontAwesome 
+                                        name={t.type === 'DESPESA' ? "shopping-basket" : "money"} 
+                                        size={18} 
+                                        color={t.type === 'DESPESA' ? COLORS.expense : COLORS.income} 
+                                    />
+                                </View>
+                                <View style={style.transInfo}>
+                                    <Text style={style.transTitle}>{t.description}</Text>
+                                    <Text style={style.transDate}>
+                                        {new Date(t.date).toLocaleDateString('pt-BR')}
                                     </Text>
                                 </View>
-                            ))
-                        )}
-                    </View>
+                                <Text style={[
+                                    style.transAmount, 
+                                    { color: t.type === 'DESPESA' ? COLORS.expense : COLORS.income }
+                                ]}>
+                                    {t.type === 'DESPESA' ? '- ' : '+ '} 
+                                    {formatCurrency(t.amount)}
+                                </Text>
+                            </View>
+                        ))
+                    )}
                 </View>
+
+                {/* Espaço extra para o menu não cobrir o último item */}
+                <View style={{ height: 20 }} />
+
             </ScrollView>
 
             <FloatingMenu currentRoute="Home" />
-
         </View>
     );
 }

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import { style, COLORS } from './style';
+import { style, COLORS } from './style'; // Importa do arquivo style.ts que você enviou
 import { FontAwesome } from '@expo/vector-icons';
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
 import api from '../../../services/api';
@@ -47,17 +47,15 @@ export default function Transacao() {
     useEffect(() => {
         if (transactionToEdit) {
             setType(transactionToEdit.type);
-            // Formata o valor numérico para string BR (ex: 12.50 -> "12,50")
             setAmount(transactionToEdit.amount.toFixed(2).replace('.', ','));
             setDescription(transactionToEdit.description);
-            // Cria a data ajustando o fuso horário para não exibir o dia anterior errado
-            const parts = transactionToEdit.date.split('-'); // ["2023", "10", "25"]
+            
+            const parts = transactionToEdit.date.split('-'); 
             const localDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
             setDate(localDate);
         }
     }, [transactionToEdit]);
 
-    // Função para pegar a data local YYYY-MM-DD (Evita erro de fuso horário)
     const getLocalDateISO = (dateObj: Date) => {
         const year = dateObj.getFullYear();
         const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -72,7 +70,6 @@ export default function Transacao() {
             return Alert.alert("Atenção", "Preencha o valor e a descrição.");
         }
 
-        // 1. Converter "1.200,50" para float 1200.50
         const cleanAmount = amount.replace(/\./g, '').replace(',', '.');
         const numericAmount = parseFloat(cleanAmount);
 
@@ -80,33 +77,40 @@ export default function Transacao() {
             return Alert.alert("Valor Inválido", "O valor deve ser maior que zero.");
         }
 
-        // 2. Montar Payload
         const payload = {
             description: description.trim(),
             amount: numericAmount,
             type: type,
-            date: getLocalDateISO(date) // Usa a função segura de data
+            date: getLocalDateISO(date)
         };
 
         try {
             setIsLoading(true);
 
             if (isEditing && transactionToEdit) {
+                // EDIÇÃO
                 await api.put(`/api/transactions/${transactionToEdit.id}`, payload);
-                Toast.show({ type: 'success', text1: 'Atualizado!', text2: 'Transação editada com sucesso.' });
+                Toast.show({ type: 'success', text1: 'Atualizado!', text2: 'Transação alterada com sucesso.' });
+                setTimeout(() => navigation.goBack(), 1000);
             } else {
+                // NOVA
                 await api.post('/api/transactions', payload);
-                Toast.show({ type: 'success', text1: 'Sucesso!', text2: 'Nova transação registrada.' });
-            }
+                
+                const msgSucesso = type === 'RECEITA' 
+                    ? 'Receita cadastrada com sucesso!' 
+                    : 'Despesa cadastrada com sucesso!';
 
-            // Voltar para Home após 1 segundo
-            setTimeout(() => navigation.goBack(), 1000);
+                Toast.show({ type: 'success', text1: 'Sucesso!', text2: msgSucesso });
+
+                // Limpar campos
+                setAmount('');
+                setDescription('');
+            }
 
         } catch (error: any) {
             console.log("Erro ao salvar:", error);
             const serverMessage = error.response?.data?.message;
             
-            // Tratamento específico de validação (ex: data futura)
             if (error.response?.status === 400 && error.response?.data?.errors) {
                 const firstError = Object.values(error.response.data.errors)[0];
                 Alert.alert("Erro de Validação", String(firstError));
@@ -147,17 +151,19 @@ export default function Transacao() {
             style={style.container}
         >
             <ScrollView contentContainerStyle={style.contentContainer} keyboardShouldPersistTaps="handled">
+                {/* 1. Uso de pageTitle (Antes era headerTitle) */}
                 <Text style={style.pageTitle}>
                     {isEditing ? "Editar Transação" : "Nova Transação"}
                 </Text>
 
-                {/* Seletor de Tipo */}
+                {/* 2. Uso de typeSelector (Antes era typeContainer) */}
                 <View style={style.typeSelector}>
                     <TouchableOpacity 
                         style={[style.typeButton, type === 'RECEITA' && style.activeIncomeButton]} 
                         onPress={() => setType('RECEITA')}
                         activeOpacity={0.7}
                     >
+                        {/* 3. Uso de typeButtonText e activeIncomeText (Antes era typeText) */}
                         <Text style={[style.typeButtonText, type === 'RECEITA' && style.activeIncomeText]}>Receita</Text>
                     </TouchableOpacity>
                     
@@ -170,12 +176,14 @@ export default function Transacao() {
                     </TouchableOpacity>
                 </View>
 
+                {/* 4. Uso de formCard (Novo container) */}
                 <View style={style.formCard}>
                     {/* Valor */}
                     <View style={style.inputGroup}>
                         <Text style={style.label}>Valor (R$)</Text>
                         <View style={style.inputContainer}>
                             <TextInput
+                                // 5. Uso de inputValue
                                 style={[style.input, style.inputValue, { color: type === 'RECEITA' ? COLORS.income : COLORS.expense }]}
                                 placeholder="0,00"
                                 placeholderTextColor={COLORS.textSecondary}
@@ -200,7 +208,7 @@ export default function Transacao() {
                         </View>
                     </View>
 
-                    {/* Data Fixa (Hoje) */}
+                    {/* Data Fixa */}
                     <View style={style.inputGroup}>
                         <Text style={style.label}>Data</Text>
                         <View style={style.selector}>

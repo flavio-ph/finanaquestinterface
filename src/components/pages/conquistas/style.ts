@@ -1,50 +1,55 @@
 import { StyleSheet, Dimensions } from "react-native";
 
-const { width } = Dimensions.get('window');
-// Cálculo para 3 colunas com espaçamento
-const CARD_MARGIN = 8;
-const CARD_WIDTH = (width / 3) - (CARD_MARGIN * 3) - 10; 
-
-// --- Constantes de Design ---
 export const COLORS = {
     primary: '#6A1B9A',
-    secondary: '#FDD835',    // Amarelo/Dourado do tema
-    background: '#121212',
+    secondary: '#FFD54F', // Dourado
+    background: '#0D0D0D',
     card: '#1E1E1E',
+    cardLocked: '#151515', // Mais escuro para bloqueados
     textPrimary: '#FFFFFF',
-    textSecondary: '#B0B0B0',
-    gold: '#FFD700',         // Cor específica para badges desbloqueadas
-    locked: '#424242',       // Cor para ícones bloqueados
+    textSecondary: '#A0A0A0',
+    border: '#333333',
+    lockedIcon: '#444444',
+    bronze: '#CD7F32',
+    silver: '#C0C0C0',
+    gold: '#FFD700',
 };
-// ---------------------------------------------------
+
+const { width } = Dimensions.get('window');
 
 export const style = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
-        paddingTop: 24,
+        paddingTop: 16,
+    },
+    contentContainer: {
+        padding: 20,
+        paddingBottom: 80,
+    },
+    
+    // Header com Progresso
+    headerContainer: {
+        alignItems: 'center',
+        marginBottom: 32,
+        marginTop: 16,
     },
     pageTitle: {
         fontSize: 24,
-        fontWeight: '700',
+        fontWeight: 'bold',
         color: COLORS.textPrimary,
-        marginBottom: 16,
-        marginTop: 16,
-        textAlign: 'center',
-    },
-
-    // --- Cabeçalho de Progresso ---
-    progressHeader: {
-        alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
     progressText: {
-        fontSize: 16,
-        color: COLORS.textSecondary,
+        fontSize: 14,
+        color: COLORS.secondary,
+        fontWeight: 'bold',
         marginBottom: 8,
     },
     progressBarTrack: {
-        width: '60%',
+        width: '80%',
         height: 8,
         backgroundColor: '#333',
         borderRadius: 4,
@@ -56,56 +61,85 @@ export const style = StyleSheet.create({
         borderRadius: 4,
     },
 
-    // --- Grade de Conquistas ---
-    gridContent: {
-        padding: 16,
-        paddingBottom: 100, // Espaço extra para não cobrir com o menu
+    // Seções
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: COLORS.textSecondary,
+        marginBottom: 16,
+        marginTop: 8,
+        paddingLeft: 4,
+        borderLeftWidth: 3,
+        borderLeftColor: COLORS.primary,
     },
-    badgeCard: {
-        width: CARD_WIDTH,
-        minHeight: 130, 
-        backgroundColor: COLORS.card,
-        borderRadius: 12,
-        padding: 12,
-        margin: CARD_MARGIN,
+
+    // Card de Conquista
+    achievementCard: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        elevation: 3,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
+        backgroundColor: COLORS.card,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        // Sombra
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 4,
     },
-    lockedCard: {
-        opacity: 0.5, 
-        backgroundColor: '#181818', // Um pouco mais escuro
+    achievementCardLocked: {
+        backgroundColor: COLORS.cardLocked,
+        borderColor: '#222',
+        opacity: 0.7,
     },
     
-    // Ícone da Badge
+    // Ícone / Medalha
     iconContainer: {
         width: 56,
         height: 56,
         borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 12,
+        marginRight: 16,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderWidth: 2,
     },
-    unlockedIconBg: {
-        backgroundColor: 'rgba(255, 215, 0, 0.15)', // Dourado translúcido
-        borderColor: COLORS.gold,
+    
+    // Texto
+    textContainer: {
+        flex: 1,
     },
-    lockedIconBg: {
-        backgroundColor: '#2C2C2C',
-        borderColor: COLORS.locked,
-    },
-
-    // Textos da Badge
-    badgeName: {
-        fontSize: 12,
-        fontWeight: '600',
+    title: {
+        fontSize: 16,
+        fontWeight: 'bold',
         color: COLORS.textPrimary,
-        textAlign: 'center',
         marginBottom: 4,
     },
+    description: {
+        fontSize: 12,
+        color: COLORS.textSecondary,
+        lineHeight: 16,
+    },
+    
+    // XP Badge
+    xpBadge: {
+        marginTop: 6,
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+        backgroundColor: 'rgba(106, 27, 154, 0.3)',
+    },
+    xpText: {
+        fontSize: 10,
+        color: COLORS.secondary,
+        fontWeight: 'bold',
+    },
+
+    // Estado Vazio
+    emptyState: { alignItems: 'center', marginTop: 40 },
+    emptyText: { color: COLORS.textSecondary, marginTop: 12 },
 });

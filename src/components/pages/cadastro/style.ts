@@ -1,148 +1,156 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
+
 export const COLORS = {
-    primary: '#6A1B9A',      // Roxo
-    secondary: '#FDD835',    // Amarelo
-    background: '#121212',   // Fundo principal
-    card: '#1E1E1E',         // Fundo dos cards
+    primary: '#6A1B9A',      
+    secondary: '#FFD54F', 
+    background: '#0D0D0D',   // Fundo super escuro
+    card: '#1E1E1E',         
+    inputBg: '#2C2C2C',      
     textPrimary: '#FFFFFF',
-    textSecondary: '#B0B0B0',
-    inputBorder: '#4A4A4A',
-    danger: '#D32F2F',       // Para o botão de Logout
+    textSecondary: '#A0A0A0',
+    border: '#333333',
+    error: '#FF5252',
+    success: '#00E676'
 };
+
+const { width } = Dimensions.get('window');
 
 export const style = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background, // fundo principal
+        backgroundColor: COLORS.background,
+        position: 'relative',
     },
 
-    header: {
-        backgroundColor: COLORS.primary, // roxo
-        height: "30%",
-        justifyContent: "center",
-        alignItems: "center",
-        borderBottomLeftRadius: 60,
-        borderBottomRightRadius: 60,
+    // --- EFEITOS DE FUNDO (Igual ao Login) ---
+    backgroundEffectTopRight: {
+        position: 'absolute',
+        top: -80,
+        right: -80,
+        width: width * 0.7,
+        height: width * 0.7,
+        borderRadius: (width * 0.7) / 2,
+        opacity: 0.2,
+    },
+    backgroundEffectBottomLeft: {
+        position: 'absolute',
+        bottom: -50,
+        left: -50,
+        width: width * 0.6,
+        height: width * 0.6,
+        borderRadius: (width * 0.6) / 2,
+        opacity: 0.2,
+    },
+    // ----------------------------------------
+
+    contentContainer: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        padding: 24,
+        paddingTop: 60, // Espaço extra para o topo
     },
 
-    logo: {
-        width: 60,
-        height: 60,
-        tintColor: COLORS.textPrimary,
+    // --- HEADER ---
+    headerContainer: {
+        marginBottom: 32,
     },
-
-    card: {
-        backgroundColor: COLORS.card, // fundo dos cards
-        width: "88%",
-        alignSelf: "center",
-        marginTop: -60,
-        padding: 25,
-        borderRadius: 25,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
-        elevation: 4,
-    },
-
     title: {
-        textAlign: "center",
-        fontSize: 26,
-        fontWeight: "bold",
+        fontSize: 32,
+        fontWeight: 'bold',
         color: COLORS.textPrimary,
-        marginBottom: 25,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 8,
+        // Sombra Neon
+        textShadowColor: COLORS.primary,
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 10,
     },
-
-    inputGroup: {
-        marginBottom: 18,
-    },
-
-    label: {
+    subtitle: {
         fontSize: 14,
         color: COLORS.textSecondary,
-        marginBottom: 6,
     },
 
-    input: {
-        height: 50,
-        backgroundColor: COLORS.card,
-        borderRadius: 10,
-        paddingHorizontal: 15,
-        fontSize: 16,
-        borderWidth: 1,
-        borderColor: COLORS.inputBorder,
-        color: COLORS.textPrimary,
+    // --- FORMULÁRIO ---
+    formContainer: {
+        width: '100%',
     },
-
-    button: {
-        backgroundColor: COLORS.primary, // amarelo
-        height: 50,
+    inputGroup: {
+        marginBottom: 16,
+    },
+    label: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: COLORS.textSecondary,
+        marginBottom: 8,
+        marginLeft: 4,
+        textTransform: 'uppercase',
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.inputBg,
         borderRadius: 12,
-        justifyContent: "center",
-        alignItems: "center",
-        marginTop: 10,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        height: 56,
+        paddingHorizontal: 16,
     },
-
-    buttonText: {
+    inputIcon: {
+        marginRight: 12,
+        width: 20, 
+        textAlign: 'center',
+    },
+    input: {
+        flex: 1,
         color: COLORS.textPrimary,
         fontSize: 16,
-        fontWeight: "bold",
+        height: '100%',
     },
 
-    footer: {
-        flexDirection: "row",
-        justifyContent: "center",
-        marginTop: 20,
+    // --- BOTÃO ---
+    buttonContainer: {
+        width: '100%',
+        height: 56,
+        borderRadius: 16,
+        marginTop: 24,
+        overflow: 'hidden',
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        elevation: 6,
+    },
+    gradientButton: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    buttonText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#FFF',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
 
+    // --- RODAPÉ ---
+    footerContainer: {
+        flexDirection: 'row',
+        marginTop: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+    },
     footerText: {
         color: COLORS.textSecondary,
         fontSize: 14,
     },
-
-    footerLink: {
-        color: COLORS.primary, // roxo
-        fontWeight: "bold",
+    linkText: {
+        color: COLORS.secondary,
+        fontWeight: 'bold',
         fontSize: 14,
-    },
-
-    subtext: {
-        color: COLORS.textPrimary
-    },
-    dividerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 32,
-    },
-    dividerLine: {
-        flex: 1,
-        height: 1,
-        backgroundColor: COLORS.card,
-    },
-    dividerText: {
-        marginTop: 24,
-        color: COLORS.textSecondary,
-        paddingHorizontal: 16,
-        fontSize: 14,
-    },
-    socialButtonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 20,
-        marginBottom: 8,
-    },
-    socialButton: {
-        width: 60,
-        height: 60,
-        borderRadius: 12,
-        backgroundColor: COLORS.card,
-        borderWidth: 1,
-        borderColor: COLORS.inputBorder,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    footerContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
+        marginLeft: 4,
     },
 });
