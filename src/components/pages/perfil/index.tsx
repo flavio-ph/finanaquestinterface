@@ -1,35 +1,79 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { 
     View, Text, TextInput, TouchableOpacity, ScrollView, 
-    KeyboardAvoidingView, Platform, Alert, ActivityIndicator 
+    KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Image 
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // Import do Gradiente
-import { FontAwesome } from '@expo/vector-icons'; // Import de Ícones
+import { LinearGradient } from 'expo-linear-gradient'; 
+import { FontAwesome } from '@expo/vector-icons'; 
+import Toast from 'react-native-toast-message';
+import * as ImagePicker from 'expo-image-picker'; // <--- IMPORTANTE
 
 import { style, COLORS } from './style';
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
 import { AuthContext } from '../../../services/authContext';
 import api from '../../../services/api';
-import Toast from 'react-native-toast-message';
 
 export default function Profile() {
     const { user, signOut, updateUser } = useContext(AuthContext);
 
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [photoLoading, setPhotoLoading] = useState(false); // Loading específico da foto
 
     // Estados do Formulário
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState(""); 
 
-    // Carrega dados
     useEffect(() => {
         if (user) {
             setName(user.name);
             setEmail(user.email);
         }
     }, [user]);
+
+    // --- FUNÇÃO PARA TROCAR FOTO ---
+    const handlePickImage = async () => {
+        // 1. Pede permissão e abre a galeria
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1], // Corte quadrado
+            quality: 0.5,   // Qualidade média para não ficar muito pesado (Base64)
+            base64: true,   // <--- Essencial: Retorna a string da imagem
+        });
+
+        if (!result.canceled && result.assets[0].base64) {
+            const base64Img = `data:image/jpeg;base64,${result.assets[0].base64}`;
+            
+            try {
+                setPhotoLoading(true);
+                
+                // 2. Envia para o Back-end
+                // Nota: O endpoint espera uma String crua no corpo
+                await api.put(`/users/${user?.id}/photo`, base64Img, {
+                    headers: { 'Content-Type': 'text/plain' }
+                });
+
+                // 3. Atualiza o Contexto e a Tela Localmente
+                if (user) {
+                    updateUser({ ...user, profilePicture: base64Img });
+                }
+
+                Toast.show({ type: 'success', text1: 'Foto de perfil atualizada!' });
+
+            } catch (error) {
+                console.log(error);
+                Alert.alert("Erro", "Não foi possível enviar a imagem.");
+            } finally {
+                setPhotoLoading(false);
+            }
+        }
+    };
+
+    const handleLogout = () => {
+        signOut(); 
+    };
 
     const handleSave = async () => {
         if (!user) return;
@@ -57,7 +101,6 @@ export default function Profile() {
             });
 
             Toast.show({ type: 'success', text1: 'Perfil Atualizado!' });
-
             setIsEditing(false);
             setPassword(""); 
 
@@ -66,13 +109,6 @@ export default function Profile() {
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const handleLogout = () => {
-        Alert.alert("Sair", "Deseja realmente sair?", [
-            { text: "Cancelar", style: "cancel" },
-            { text: "Sair", style: "destructive", onPress: () => signOut() }
-        ]);
     };
 
     const getInitials = (fullName: string) => {
@@ -86,15 +122,38 @@ export default function Profile() {
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={style.container}
         >
-            <ScrollView contentContainerStyle={style.contentContainer} keyboardShouldPersistTaps="handled">
+            <ScrollView contentContainerStyle={[style.contentContainer, { paddingBottom: 130 }]} keyboardShouldPersistTaps="handled">
                 
                 {/* --- HEADER --- */}
                 <View style={style.header}>
-                    <View style={style.avatarContainer}>
-                        <Text style={style.avatarText}>
-                            {getInitials(name || "Visitante")}
-                        </Text>
-                    </View>
+                    
+                    {/* ÁREA DA FOTO CLICÁVEL */}
+                    <TouchableOpacity onPress={handlePickImage} style={style.avatarContainer} activeOpacity={0.7}>
+                        {photoLoading ? (
+                            <ActivityIndicator color={COLORS.primary} />
+                        ) : user?.profilePicture ? (
+                            // Se tiver foto, mostra a imagem
+                            <Image 
+                                source={{ uri: user.profilePicture }} 
+                                style={{ width: 100, height: 100, borderRadius: 50 }} 
+                            />
+                        ) : (
+                            // Se não, mostra as iniciais
+                            <Text style={style.avatarText}>
+                                {getInitials(name || "Visitante")}
+                            </Text>
+                        )}
+
+                        {/* Ícone de câmera pequeninho para indicar edição */}
+                        <View style={{
+                            position: 'absolute', bottom: 0, right: 0, 
+                            backgroundColor: COLORS.primary, padding: 8, borderRadius: 20,
+                            borderWidth: 2, borderColor: '#121212'
+                        }}>
+                            <FontAwesome name="camera" size={14} color="#FFF" />
+                        </View>
+                    </TouchableOpacity>
+
                     <Text style={style.userName}>{user?.name || "Usuário"}</Text>
                     
                     <View style={style.badgesRow}>
@@ -109,8 +168,8 @@ export default function Profile() {
 
                 {/* --- FORMULÁRIO --- */}
                 <View style={style.formSection}>
+                    {/* (O restante do formulário continua igual ao anterior) */}
                     
-                    {/* Nome */}
                     <View style={style.inputGroup}>
                         <Text style={style.label}>NOME DE JOGADOR</Text>
                         <View style={[style.inputContainer, isEditing && style.inputContainerEditable]}>
@@ -124,7 +183,6 @@ export default function Profile() {
                         </View>
                     </View>
 
-                    {/* Email */}
                     <View style={style.inputGroup}>
                         <Text style={style.label}>EMAIL DE ACESSO</Text>
                         <View style={[style.inputContainer, isEditing && style.inputContainerEditable]}>
@@ -140,7 +198,6 @@ export default function Profile() {
                         </View>
                     </View>
 
-                    {/* Senha (Só aparece ao editar) */}
                     {isEditing && (
                         <View style={style.inputGroup}>
                             <Text style={style.label}>NOVA SENHA (OPCIONAL)</Text>
@@ -157,18 +214,16 @@ export default function Profile() {
                             </View>
                         </View>
                     )}
-
                 </View>
 
-                {/* --- BOTÕES DE AÇÃO --- */}
+                {/* --- BOTÕES --- */}
                 <TouchableOpacity 
                     style={[style.actionButtonContainer, isLoading && { opacity: 0.7 }]} 
                     onPress={() => isEditing ? handleSave() : setIsEditing(true)}
                     disabled={isLoading}
-                    activeOpacity={0.8}
                 >
                     <LinearGradient
-                        colors={[COLORS.primary, '#4A148C']} // Gradiente Roxo
+                        colors={[COLORS.primary, '#4A148C']}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={style.gradientButton}
@@ -186,14 +241,7 @@ export default function Profile() {
                 {isEditing && (
                     <TouchableOpacity 
                         style={style.cancelButton} 
-                        onPress={() => {
-                            setIsEditing(false);
-                            if (user) {
-                                setName(user.name);
-                                setEmail(user.email);
-                                setPassword("");
-                            }
-                        }}
+                        onPress={() => { setIsEditing(false); if(user) { setName(user.name); setEmail(user.email); setPassword(""); } }}
                         disabled={isLoading}
                     >
                          <Text style={style.cancelButtonText}>Cancelar</Text>
@@ -210,7 +258,6 @@ export default function Profile() {
             </ScrollView>
             
             <FloatingMenu currentRoute="Perfil" />
-
         </KeyboardAvoidingView>
     );
 }

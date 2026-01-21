@@ -9,6 +9,7 @@ export interface User {
     email: string;
     level: number;
     experiencePoints: number;
+    profilePicture?: string;
 }
 
 interface AuthContextData {

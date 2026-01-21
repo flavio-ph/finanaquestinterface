@@ -29,7 +29,7 @@ export const style = StyleSheet.create({
         width: width * 0.8, // Ocupa 80% da largura
         height: width * 0.8,
         borderRadius: (width * 0.8) / 2, // Torna um círculo
-        opacity: 0.3, // Bem sutil
+        opacity: 0.5, // Bem sutil
     },
     backgroundEffectBottomRight: {
         position: 'absolute',
@@ -38,7 +38,7 @@ export const style = StyleSheet.create({
         width: width * 0.6,
         height: width * 0.6,
         borderRadius: (width * 0.6) / 2,
-        opacity: 0.2, // Ainda mais sutil
+        opacity: 0.4, // Ainda mais sutil
        
     },
     // ----------------------------------------------

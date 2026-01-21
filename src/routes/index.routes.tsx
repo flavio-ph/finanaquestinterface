@@ -1,77 +1,29 @@
-import React from "react";
-import { createStackNavigator } from "@react-navigation/stack";
-import Login from "../components/pages/login";
-import BottomRoutes from "./bottom.routes";
-import Cadastro from "../components/pages/cadastro";
-import Home from "../components/pages/home";
-import Profile from "../components/pages/perfil";
-import Transacao from "../components/pages/transacao";
-import Extrato from "../components/pages/extrato";
-import Metas from "../components/pages/metas";
-import Relatorio from "../components/pages/relatorio";
-import Challenges from "../components/pages/desafios";
-import Conquistas from "../components/pages/conquistas";
+import React, { useContext } from "react";
+import { View, ActivityIndicator } from "react-native";
+
+// Importe o Contexto de Autenticação
+import { AuthContext } from "../services/authContext";
+
+// Importe os dois conjuntos de rotas
+import StackRoutes from "./stack.routes"; // Crie este arquivo conforme acima
+import BottomRoutes from "./bottom.routes"; // Suas rotas logadas (Home, etc)
 
 export default function Routes(){
+    // Pega o estado do usuário do contexto
+    const { user, loading } = useContext(AuthContext);
 
-    const Stack = createStackNavigator()
+    // 1. Tela de Carregamento (Splash Screen improvisada)
+    // Enquanto o App verifica se tem token salvo no celular
+    if (loading) {
+        return (
+            <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0D0D0D'}}>
+                <ActivityIndicator size="large" color="#6A1B9A" />
+            </View>
+        );
+    }
 
-    return (
-
-        <Stack.Navigator
-        initialRouteName="Login"
-        screenOptions={{
-            headerShown: false,
-            cardStyle:{
-                backgroundColor: "#ffffff"
-            }
-        }
-        }>
-            <Stack.Screen
-                name="Login"
-                component={Login}
-                />
-            <Stack.Screen
-                name="BottomRoutes"
-                component={BottomRoutes}
-                />
-                <Stack.Screen
-                name="Cadastro"
-                component={Cadastro}
-                />
-                <Stack.Screen
-                name="Home"
-                component={Home}
-                />
-                <Stack.Screen
-                name="Profile"
-                component={Profile}
-                />
-                <Stack.Screen
-                name="Transacao"
-                component={Transacao}
-                />
-                <Stack.Screen
-                name="Extrato"
-                component={Extrato}
-                />
-                <Stack.Screen
-                name="Metas"
-                component={Metas}
-                />
-                <Stack.Screen
-                name="Relatorio"
-                component={Relatorio}
-                />
-                <Stack.Screen
-                name="Challenges"
-                component={Challenges}
-                />
-                 <Stack.Screen
-                name="Conquistas"
-                component={Conquistas}
-                />
-        </Stack.Navigator>
-    )
-
+    // 2. A Lógica de Decisão:
+    // Se tem usuário --> Mostra o App (Home/BottomTabs)
+    // Se não tem --> Mostra o Login (Stack)
+    return user ? <BottomRoutes /> : <StackRoutes />;
 }

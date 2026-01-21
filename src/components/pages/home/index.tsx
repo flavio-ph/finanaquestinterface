@@ -1,15 +1,16 @@
 import React, { useContext, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { 
+    View, Text, ScrollView, TouchableOpacity, Image 
+} from 'react-native'; // <--- ADICIONADO "Image" AQUI
 import { useFocusEffect, useNavigation, NavigationProp } from "@react-navigation/native";
 import { FontAwesome } from '@expo/vector-icons'; 
-import { LinearGradient } from 'expo-linear-gradient'; // Importando Gradiente
+import { LinearGradient } from 'expo-linear-gradient'; 
 
 import { style, COLORS } from './style'; 
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
 import { AuthContext } from '../../../services/authContext';
 import api from '../../../services/api';
 
-// Definição dos tipos
 interface TransactionData {
     id: number;
     description: string;
@@ -18,10 +19,12 @@ interface TransactionData {
     date: string;
 }
 
+// --- ATUALIZAÇÃO 1: Adicionar profilePicture na interface ---
 interface UserProfile {
     name: string;
     level: number;
     experiencePoints: number;
+    profilePicture?: string; // <--- NOVO CAMPO
 }
 
 export default function Home() {
@@ -34,18 +37,18 @@ export default function Home() {
     const [balance, setBalance] = useState(0);
     const [monthlyIncome, setMonthlyIncome] = useState(0);
     const [monthlyExpense, setMonthlyExpense] = useState(0);
-    const [loading, setLoading] = useState(true);
+    // const [loading, setLoading] = useState(true); // Opcional
 
     useFocusEffect(
         useCallback(() => {
-            fetchData();
-        }, [])
+            if (user?.id) {
+                fetchData();
+            }
+        }, [user])
     );
 
     async function fetchData() {
         try {
-            if (!profile) setLoading(true);
-
             if (user?.id) {
                 const userRes = await api.get(`/users/${user.id}`);
                 setProfile(userRes.data);
@@ -86,8 +89,6 @@ export default function Home() {
 
         } catch (error) {
             console.log("Erro ao carregar Home:", error);
-        } finally {
-            setLoading(false);
         }
     }
 
@@ -100,17 +101,16 @@ export default function Home() {
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
-    const xpToNextLevel = (profile?.level || 1) * 100;
-    const currentXP = profile?.experiencePoints || 0;
+    const currentLevel = profile?.level || user?.level || 1;
+    const currentXP = profile?.experiencePoints || user?.experiencePoints || 0;
+    
+    const xpToNextLevel = currentLevel * 100;
     const progressPercent = Math.min((currentXP / xpToNextLevel) * 100, 100);
 
-    if (loading && !profile) {
-        return (
-            <View style={[style.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
-        );
-    }
+    const displayName = profile?.name || user?.name || "Visitante";
+    
+    // --- LÓGICA DA FOTO: Prioriza a da API (recente), senão usa a do Contexto ---
+    const displayPhoto = profile?.profilePicture || user?.profilePicture;
 
     return (
         <View style={style.container}>
@@ -120,16 +120,27 @@ export default function Home() {
                 <View style={style.header}>
                     <View style={style.userProfile}>
                         <TouchableOpacity onPress={() => navegarPara('Perfil')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                             <View style={style.avatarContainer}>
-                                <FontAwesome name="user" size={24} color={COLORS.primary} />
+                             
+                             {/* --- ATUALIZAÇÃO 2: Exibir a Imagem se existir --- */}
+                             <View style={[style.avatarContainer, { overflow: 'hidden' }]}> 
+                                {displayPhoto ? (
+                                    <Image 
+                                        source={{ uri: displayPhoto }} 
+                                        style={{ width: '100%', height: '100%', borderRadius: 50 }} 
+                                    />
+                                ) : (
+                                    <FontAwesome name="user" size={24} color={COLORS.primary} />
+                                )}
                              </View>
+                             {/* ------------------------------------------------ */}
+
                              <View style={style.greetingContainer}>
                                 <Text style={style.welcomeText}>Bem-vindo de volta,</Text>
                                 <Text style={style.userName}>
-                                    {profile?.name ? profile.name.split(' ')[0] : "Visitante"}
+                                    {displayName.split(' ')[0]}
                                 </Text>
                                 <View style={style.userLevelBadge}>
-                                    <Text style={style.userLevelText}>LVL {profile?.level || 1}</Text>
+                                    <Text style={style.userLevelText}>LVL {currentLevel}</Text>
                                 </View>
                              </View>
                         </TouchableOpacity>
@@ -142,7 +153,6 @@ export default function Home() {
                             <FontAwesome name="trophy" size={12} color={COLORS.secondary} />
                         </View>
                         <View style={style.xpTrack}>
-                            {/* Gradiente na barra de XP */}
                             <LinearGradient
                                 colors={[COLORS.secondary, '#FFAB00']}
                                 start={{ x: 0, y: 0 }}
@@ -154,9 +164,9 @@ export default function Home() {
                     </TouchableOpacity>
                 </View>
 
-                {/* --- CARD DE SALDO (GRADIENTE) --- */}
+                {/* --- CARD DE SALDO --- */}
                 <LinearGradient
-                    colors={[COLORS.primary, '#311B92']} // Roxo para Azul Profundo
+                    colors={[COLORS.primary, '#311B92']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={style.balanceCard}
@@ -165,7 +175,6 @@ export default function Home() {
                     <Text style={style.balanceAmount}>{formatCurrency(balance)}</Text>
                     
                     <View style={style.financeRow}>
-                        {/* Receita */}
                         <View style={style.financeItem}>
                             <View style={style.financeIconBox}>
                                 <FontAwesome name="arrow-up" size={14} color={COLORS.accent} />
@@ -176,7 +185,6 @@ export default function Home() {
                             </View>
                         </View>
 
-                        {/* Despesa */}
                         <View style={style.financeItem}>
                             <View style={style.financeIconBox}>
                                 <FontAwesome name="arrow-down" size={14} color="#FF5252" />
@@ -189,7 +197,7 @@ export default function Home() {
                     </View>
                 </LinearGradient>
 
-                {/* --- QUESTS (DESAFIOS) --- */}
+                {/* --- QUEST ATIVA --- */}
                 <View style={style.sectionHeader}>
                     <Text style={style.sectionTitle}>Quest Ativa</Text>
                     <TouchableOpacity style={style.seeAllButton} onPress={() => navegarPara('Desafios')}>
@@ -205,7 +213,6 @@ export default function Home() {
                         <Text style={style.questTitle}>Economia de Guerreiro</Text>
                         <Text style={style.questDesc}>Gaste menos de R$ 500 em Alimentação</Text>
                         
-                        {/* Barra de Progresso da Quest */}
                         <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
                              <View style={{flex: 1, height: 6, backgroundColor: '#333', borderRadius: 3}}>
                                 <View style={{width: '80%', height: '100%', backgroundColor: COLORS.accent, borderRadius: 3}} />
@@ -259,8 +266,8 @@ export default function Home() {
                     )}
                 </View>
 
-                {/* Espaço extra para o menu não cobrir o último item */}
-                <View style={{ height: 20 }} />
+                {/* Espaço extra para o menu */}
+                <View style={{ height: 130 }} />
 
             </ScrollView>
 
