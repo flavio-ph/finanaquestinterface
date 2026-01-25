@@ -3,123 +3,155 @@ import { StyleSheet, Platform, Dimensions } from "react-native";
 const { width } = Dimensions.get('window');
 
 export const COLORS = {
-    background: '#121212', // Fundo quase preto, mas não #000
-    border: '#2A2A2A',
-    active: '#00E676',     // Verde Neon
-    inactive: '#888',
-    gradientStart: '#6A1B9A',
-    gradientEnd: '#4A148C',
+    // Fundo extraído do App.tsx web (#0a0a0c)
+    background: '#0F0F11', 
+    
+    // Roxo Neon (baseado no purple-600/violet-900 do código web)
+    primary: '#7C3AED', 
+    secondary: '#4C1D95',
+    
+    // Cores de estado
+    activeIcon: '#FFF',
+    inactiveIcon: '#6B7280', // Cinza azulado moderno
+    
     white: '#FFF',
-    overlay: 'rgba(0,0,0,0.7)', // Para o fundo do modal
-    modalBg: '#1E1E1E'
+    
+    // Sombras
+    shadowColor: '#7C3AED', // Sombra roxa
+    modalOverlay: 'rgba(10, 10, 12, 0.9)', // Fundo escuro quase opaco
+    modalBg: '#131315',
+    cardBg: '#1C1C1E'
 };
 
 export const style = StyleSheet.create({
     container: {
         position: 'absolute',
-        bottom: Platform.OS === 'ios' ? 25 : 15,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
+        bottom: Platform.OS === 'ios' ? 30 : 20,
+        alignSelf: 'center',
         zIndex: 999,
     },
     menuBar: {
         flexDirection: 'row',
         backgroundColor: COLORS.background,
-        width: width * 0.92, // 92% da largura da tela
-        maxWidth: 400,       // Trava em telas muito grandes
-        height: 65,
-        borderRadius: 20,    // Bordas menos arredondadas (mais moderno)
         
-        justifyContent: 'space-around', // Distribuição uniforme
+        // Cápsula larga
+        width: width * 0.90,
+        maxWidth: 400,
+        height: 70,
+        borderRadius: 40, // Bem redondo
+        
+        justifyContent: 'space-between',
         alignItems: 'center',
+        paddingHorizontal: 20,
         
-        // Sombra suave estilo "Glassmorphism"
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.5,
-        shadowRadius: 10,
-        elevation: 10,
+        // Sombra com "Glow" Roxo (Estilo Cyberpunk)
+        shadowColor: COLORS.shadowColor,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.4,
+        shadowRadius: 20,
+        elevation: 15,
         
+        // Borda sutil para separar do fundo preto
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: 'rgba(124, 58, 237, 0.2)', 
     },
+    
+    // O "Slider" ativo (Bolinha que fica atrás do ícone)
+    activeBackground: {
+        position: 'absolute',
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: COLORS.primary,
+        zIndex: -1, // Fica atrás do ícone
+    },
+
     menuItem: {
-        flex: 1,
         height: '100%',
+        width: 50, // Largura fixa para alinhar o slider
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    activeLabel: {
-        fontSize: 10,
-        color: COLORS.active,
-        marginTop: 4,
-        fontWeight: 'bold',
     },
     
     // Botão Central (Transação)
     centerButtonContainer: {
-        top: -20, 
+        top: -25,
         justifyContent: 'center',
         alignItems: 'center',
     },
     centerButton: {
-        width: 58,
-        height: 58,
-        borderRadius: 29,
+        width: 65,
+        height: 65,
+        borderRadius: 35,
+        backgroundColor: '#0a0a0c', // Cor do fundo da tela para "recortar"
         justifyContent: 'center',
         alignItems: 'center',
+        
+        // Borda e Sombra
         borderWidth: 4,
-        borderColor: '#0D0D0D', // Mesma cor do fundo da tela para "recortar"
-        elevation: 5,
+        borderColor: '#0a0a0c',
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.6,
+        shadowRadius: 15,
+        elevation: 10,
+    },
+    centerIconCircle: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 35,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.primary,
     },
 
-    // --- ESTILOS DO MODAL "MAIS OPÇÕES" ---
+    // --- MODAL ---
     modalOverlay: {
         flex: 1,
-        backgroundColor: COLORS.overlay,
+        backgroundColor: COLORS.modalOverlay,
         justifyContent: 'flex-end',
     },
     modalContent: {
         backgroundColor: COLORS.modalBg,
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
-        padding: 20,
-        paddingBottom: 40,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        padding: 25,
+        paddingBottom: 50,
         borderTopWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 25,
     },
     modalTitle: {
         color: '#FFF',
         fontSize: 18,
         fontWeight: 'bold',
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', // Toque tech
     },
     modalGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        justifyContent: 'space-between',
+        gap: 15,
+        justifyContent: 'center',
     },
     modalItem: {
-        width: '48%', // Dois por linha
-        backgroundColor: '#252525',
-        padding: 15,
-        borderRadius: 12,
-        marginBottom: 15,
-        flexDirection: 'row',
+        width: '45%',
+        aspectRatio: 1.3,
+        backgroundColor: COLORS.cardBg,
+        borderRadius: 20,
+        justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#333',
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     modalItemText: {
-        color: '#FFF',
-        marginLeft: 10,
+        color: '#A1A1AA',
+        marginTop: 10,
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '500',
     }
 });
