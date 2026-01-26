@@ -40,6 +40,7 @@ export default function Desafios() {
 
     async function fetchChallenges() {
         try {
+            // Só mostra loading full screen se não tiver nada carregado
             if (challenges.length === 0) setLoading(true);
             const response = await api.get('/api/challenges');
             setChallenges(response.data);
@@ -50,7 +51,6 @@ export default function Desafios() {
         }
     }
 
-    // --- Lógica de Cadastro ---
     async function handleCreateChallenge() {
         if (!nome || !descricao || !xp || !duracao) {
             return Alert.alert("Atenção", "Preencha todos os campos.");
@@ -66,11 +66,9 @@ export default function Desafios() {
         setSaving(true);
         Keyboard.dismiss();
 
-        // Calculando datas automaticamente
         const today = new Date();
         const endDate = new Date();
         endDate.setDate(today.getDate() + diasValue);
-
         const formatDateISO = (d: Date) => d.toISOString().split('T')[0];
 
         const payload = {
@@ -92,7 +90,7 @@ export default function Desafios() {
 
             setModalVisible(false);
             resetForm();
-            fetchChallenges(); // Recarrega a lista
+            fetchChallenges(); 
 
         } catch (error) {
             console.log(error);
@@ -125,18 +123,27 @@ export default function Desafios() {
 
     return (
         <View style={style.container}>
-            {/* Botão de Adicionar (Topo Direito) */}
-            <TouchableOpacity style={style.addButton} onPress={() => setModalVisible(true)}>
-                <FontAwesome name="plus" size={20} color={COLORS.primary} />
-            </TouchableOpacity>
-
             <ScrollView contentContainerStyle={style.contentContainer}>
-                <Text style={style.pageTitle}>Desafios</Text>
+                
+                {/* --- CABEÇALHO ALINHADO --- */}
+                <View style={style.headerRow}>
+                    <Text style={style.pageTitle}>Desafios</Text>
+                    
+                    <TouchableOpacity 
+                        style={style.addButton} 
+                        onPress={() => setModalVisible(true)}
+                        activeOpacity={0.7}
+                    >
+                        <FontAwesome name="plus" size={18} color={COLORS.primary} />
+                    </TouchableOpacity>
+                </View>
+                {/* --------------------------- */}
+
                 <Text style={style.sectionTitle}>Disponíveis</Text>
 
                 {challenges.length === 0 ? (
                     <View style={style.emptyState}>
-                        <FontAwesome name="trophy" size={48} color={COLORS.textSecondary} />
+                        <FontAwesome name="trophy" size={48} color="#27272A" />
                         <Text style={style.emptyText}>Sem desafios ativos.</Text>
                         <TouchableOpacity onPress={() => setModalVisible(true)}>
                             <Text style={{ color: COLORS.primary, marginTop: 10, fontWeight: 'bold' }}>
@@ -193,39 +200,36 @@ export default function Desafios() {
                     <View style={style.modalContent}>
                         <Text style={style.modalTitle}>Novo Desafio</Text>
 
-                        {/* Nome */}
                         <View style={style.inputGroup}>
                             <Text style={style.label}>Título</Text>
                             <TextInput
                                 style={style.input}
                                 placeholder="Ex: Semana Econômica"
-                                placeholderTextColor="#666"
+                                placeholderTextColor="#555"
                                 value={nome}
                                 onChangeText={setNome}
                             />
                         </View>
 
-                        {/* Descrição */}
                         <View style={style.inputGroup}>
                             <Text style={style.label}>Descrição / Regra</Text>
                             <TextInput
                                 style={style.input}
                                 placeholder="Ex: Não gaste com delivery..."
-                                placeholderTextColor="#666"
+                                placeholderTextColor="#555"
                                 value={descricao}
                                 onChangeText={setDescricao}
                                 multiline
                             />
                         </View>
 
-                        {/* XP e Duração (Lado a Lado) */}
                         <View style={{ flexDirection: 'row', gap: 10 }}>
                             <View style={[style.inputGroup, { flex: 1 }]}>
-                                <Text style={style.label}>XP (Recompensa)</Text>
+                                <Text style={style.label}>XP</Text>
                                 <TextInput
                                     style={style.input}
                                     placeholder="500"
-                                    placeholderTextColor="#666"
+                                    placeholderTextColor="#555"
                                     keyboardType="numeric"
                                     value={xp}
                                     onChangeText={setXp}
@@ -236,7 +240,7 @@ export default function Desafios() {
                                 <TextInput
                                     style={style.input}
                                     placeholder="7"
-                                    placeholderTextColor="#666"
+                                    placeholderTextColor="#555"
                                     keyboardType="numeric"
                                     value={duracao}
                                     onChangeText={setDuracao}
@@ -244,14 +248,10 @@ export default function Desafios() {
                             </View>
                         </View>
 
-                        {/* Botões */}
                         <View style={style.modalActions}>
                             <TouchableOpacity 
                                 style={style.buttonCancel} 
-                                onPress={() => {
-                                    setModalVisible(false);
-                                    resetForm();
-                                }}
+                                onPress={() => { setModalVisible(false); resetForm(); }}
                             >
                                 <Text style={[style.buttonText, { color: COLORS.textSecondary }]}>Cancelar</Text>
                             </TouchableOpacity>
@@ -261,11 +261,7 @@ export default function Desafios() {
                                 onPress={handleCreateChallenge}
                                 disabled={saving}
                             >
-                                {saving ? (
-                                    <ActivityIndicator color="#FFF" />
-                                ) : (
-                                    <Text style={style.buttonText}>Criar</Text>
-                                )}
+                                {saving ? <ActivityIndicator color="#FFF" /> : <Text style={style.buttonText}>Criar</Text>}
                             </TouchableOpacity>
                         </View>
                     </View>
