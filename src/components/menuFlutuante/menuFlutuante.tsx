@@ -102,7 +102,7 @@ export default function FloatingMenu({ currentRoute }: Props) {
                                 <View style={style.modalGrid}>
                                     {[
                                         { route: 'Perfil', icon: 'user', color: COLORS.primary, label: 'Perfil' },
-                                        { route: 'Desafios', icon: 'shield', color: '#F59E0B', label: 'Quests' },
+                                        { route: 'Desafios', icon: 'shield', color: '#F59E0B', label: 'Desafios' },
                                         { route: 'Conquistas', icon: 'trophy', color: '#3B82F6', label: 'Rank' },
                                         { route: 'Relatorio', icon: 'pie-chart', color: '#EC4899', label: 'Dados' }
                                     ].map((item, index) => (

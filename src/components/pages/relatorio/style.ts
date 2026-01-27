@@ -1,106 +1,155 @@
 import { StyleSheet, Dimensions } from "react-native";
 
-// --- Constantes de Design ---
+const { width } = Dimensions.get("window");
+
 export const COLORS = {
-    primary: '#6A1B9A',      // Roxo
-    secondary: '#FDD835',    // Amarelo
-    background: '#121212',   // Fundo principal
-    card: '#1E1E1E',         // Fundo dos cards
-    textPrimary: '#FFFFFF',
-    textSecondary: '#B0B0B0',
-    inputBorder: '#333333',
-    income: '#4CAF50',       // Verde
-    expense: '#F44336',      // Vermelho
+    background: "#0F0F11",
+    card: "#18181B",
+    primary: "#7C3AED", // Roxo Neon
+    secondary: "#4C1D95",
+    
+    text: "#E4E4E7",
+    textSecondary: "#A1A1AA",
+    
+    income: "#00E676", // Verde Neon
+    expense: "#FF5252", // Vermelho Suave
+    
+    border: "#27272A"
 };
-// ---------------------------------------------------
 
 export const style = StyleSheet.create({
     container: {
-        paddingTop: 24,
         flex: 1,
         backgroundColor: COLORS.background,
     },
     contentContainer: {
-        padding: 16,
-        paddingBottom: 40,
-    },
-    pageTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: COLORS.textPrimary,
-        marginBottom: 24,
-        marginTop: 16,
-        textAlign: 'left',
-        borderBottomColor: COLORS.primary,
-        borderTopColor: COLORS.background,
-        borderLeftColor: COLORS.background,
-        borderRightColor: COLORS.background,
-        borderWidth: 1,
-       
-
+        padding: 20,
+        paddingTop: 60,
+        paddingBottom: 130, // Espaço para o menu
     },
 
+    // --- HEADER ---
+    header: {
+        marginBottom: 25,
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: "bold",
+        color: COLORS.text,
+        letterSpacing: 0.5,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: COLORS.textSecondary,
+        marginTop: 5,
+    },
+
+    // --- SELETOR DE MÊS ---
     monthSelector: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 0, 
-        marginBottom: 24,
+        backgroundColor: COLORS.card,
+        borderRadius: 16,
+        padding: 10,
+        marginBottom: 25,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
-    monthNavButton: {
-        padding: 8,
+    monthButton: {
+        padding: 10,
     },
-    monthLabel: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.textPrimary,
+    monthText: {
+        color: COLORS.text,
+        fontSize: 16,
+        fontWeight: 'bold',
+        textTransform: 'capitalize',
     },
 
+    // --- RESUMO (CARDS) ---
     summaryContainer: {
         flexDirection: 'row',
-        gap: 16,
-        marginBottom: 24,
+        justifyContent: 'space-between',
+        marginBottom: 30,
+        gap: 15,
     },
     summaryCard: {
         flex: 1,
         backgroundColor: COLORS.card,
+        borderRadius: 20,
         padding: 20,
-        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: COLORS.border,
         alignItems: 'center',
-        justifyContent: 'center',
-        // Opcional: Sombra sutil mesmo no dark mode para destacar
+        
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 3,
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 5,
     },
     summaryLabel: {
-        fontSize: 14,
+        fontSize: 12,
         color: COLORS.textSecondary,
-        marginBottom: 8,
         marginTop: 8,
+        fontWeight: '600',
     },
     summaryValue: {
-        fontSize: 20,
-        fontWeight: '700',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginTop: 4,
     },
 
-    // --- Seções de Gráfico (Específico de Relatórios) ---
+    // --- CONTAINER DO GRÁFICO ---
     chartSection: {
         backgroundColor: COLORS.card,
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 24,
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 25,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        overflow: 'hidden',
+    },
+    
+    // Novo Header do Gráfico (Título + Botão Olho)
+    chartHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
+        marginBottom: 15,
     },
     chartTitle: {
         fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.textPrimary,
-        marginBottom: 24,
-        alignSelf: 'flex-start', // Alinha o título à esquerda dentro do card
-        marginLeft: 8,
+        fontWeight: 'bold',
+        color: COLORS.text,
     },
+    toggleButton: {
+        padding: 8,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 8,
+    },
+    toggleText: {
+        color: COLORS.primary,
+        fontSize: 12,
+        fontWeight: '600',
+        marginLeft: 5,
+    },
+
+    // --- EMPTY STATE ---
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 40,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 20,
+        borderStyle: 'dashed',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        marginTop: 10,
+    },
+    emptyText: {
+        color: COLORS.textSecondary,
+        marginTop: 10,
+        fontSize: 14,
+    }
 });

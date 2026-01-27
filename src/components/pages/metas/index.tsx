@@ -11,9 +11,18 @@ import FloatingMenu from '../../menuFlutuante/menuFlutuante';
 import { AuthContext } from '../../../services/authContext';
 import api from '../../../services/api';
 
+// Interface para tipar os dados da meta
+interface Goal {
+    id: number;
+    title: string;
+    currentAmount: number;
+    targetAmount: number;
+    progressPercentage: number;
+}
+
 export default function Metas() {
     const { user } = useContext(AuthContext);
-    const [goals, setGoals] = useState<any[]>([]);
+    const [goals, setGoals] = useState<Goal[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     
@@ -28,7 +37,8 @@ export default function Metas() {
 
     async function fetchGoals() {
         try {
-            const response = await api.get('/goals');
+            // CORREÇÃO 1: Adicionado /api
+            const response = await api.get('/api/goals');
             setGoals(response.data);
         } catch (error) {
             console.log("Erro ao buscar metas");
@@ -41,23 +51,30 @@ export default function Metas() {
         if (!title || !targetAmount) return Alert.alert("Erro", "Preencha os campos!");
         
         try {
-            await api.post('/goals', {
-                title,
+            // CORREÇÃO 2: Adicionado /api e verificação do nome do campo
+            // Se o seu Java DTO espera "name", mude para { name: title, ... }
+            // Se espera "title", mantenha { title, ... }
+            await api.post('/api/goals', {
+                title: title, 
                 targetAmount: parseFloat(targetAmount.replace(',', '.')),
                 deadline: deadline || null
             });
+            
             Toast.show({ type: 'success', text1: 'Meta criada!' });
             setModalVisible(false);
             setTitle(""); setTargetAmount(""); setDeadline("");
             fetchGoals();
+            
         } catch (error) {
+            console.log(error);
             Alert.alert("Erro", "Falha ao criar meta.");
         }
     }
 
     async function handleDelete(id: number) {
         try {
-            await api.delete(`/goals/${id}`);
+            // CORREÇÃO 3: Adicionado /api
+            await api.delete(`/api/goals/${id}`);
             fetchGoals();
         } catch (error) {
             Alert.alert("Erro", "Não foi possível excluir.");
@@ -71,7 +88,7 @@ export default function Metas() {
         <View style={style.container}>
             <ScrollView contentContainerStyle={style.contentContainer}>
                 
-                {/* --- HEADER ALINHADO AQUI --- */}
+                {/* --- HEADER --- */}
                 <View style={style.headerRow}>
                     <Text style={style.title}>Minhas Metas</Text>
                     
@@ -83,7 +100,7 @@ export default function Metas() {
                         <FontAwesome name="plus" size={20} color="#FFF" />
                     </TouchableOpacity>
                 </View>
-                {/* --------------------------- */}
+                {/* -------------- */}
 
                 {loading ? (
                     <ActivityIndicator color={COLORS.primary} size="large" style={{marginTop: 50}} />
@@ -110,7 +127,6 @@ export default function Metas() {
                                 <View style={[style.progressBarFill, { width: `${Math.min(item.progressPercentage, 100)}%` }]} />
                             </View>
                             
-                            {/* Botões de Ação Rápida (Exemplo) */}
                             <View style={style.cardActions}>
                                 <TouchableOpacity style={[style.actionButton, style.depositButton]}>
                                     <Text style={[style.actionText, style.depositText]}>Depositar</Text>
@@ -122,6 +138,7 @@ export default function Metas() {
 
             </ScrollView>
 
+            {/* Menu fora do ScrollView */}
             <FloatingMenu currentRoute="Metas" />
 
             {/* Modal de Criação */}

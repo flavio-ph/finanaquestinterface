@@ -50,7 +50,8 @@ export default function Conquistas() {
             
             if (user?.id) {
                 try {
-                    const response = await api.get(`/users/${user.id}/achievements`);
+                   // Adicionado /api antes de /users
+            const response = await api.get(`/api/users/${user.id}/achievements`);
                     // Supondo que retorne lista de objetos com ID
                     unlockedIds = response.data.map((a: any) => a.id);
                 } catch (e) {

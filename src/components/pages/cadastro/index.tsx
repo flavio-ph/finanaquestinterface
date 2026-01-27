@@ -28,6 +28,10 @@ export default function Cadastro() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // 1. Estados para controlar a visibilidade das senhas
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
     async function handleRegister() {
         // Validações básicas
         if (!name || !email || !password || !confirmPassword) {
@@ -102,7 +106,7 @@ export default function Cadastro() {
                     {/* Cabeçalho */}
                     <View style={style.headerContainer}>
                         <Text style={style.title}>Crie sua Conta</Text>
-                        <Text style={style.subtitle}>Junte-se à guilda FinanQuest!</Text>
+                        <Text style={style.subtitle}>Inicie sua jornada financeira!</Text>
                     </View>
 
                     {/* Formulário */}
@@ -110,7 +114,7 @@ export default function Cadastro() {
                         
                         {/* Nome */}
                         <View style={style.inputGroup}>
-                            <Text style={style.label}>Nome de Jogador</Text>
+                            <Text style={style.label}>Nome</Text>
                             <View style={style.inputContainer}>
                                 <FontAwesome name="user" size={18} color={COLORS.textSecondary} style={style.inputIcon} />
                                 <TextInput
@@ -146,13 +150,26 @@ export default function Cadastro() {
                             <View style={style.inputContainer}>
                                 <FontAwesome name="lock" size={20} color={COLORS.textSecondary} style={style.inputIcon} />
                                 <TextInput
-                                    style={style.input}
+                                    // Adicionado paddingRight e flex: 1
+                                    style={[style.input, { paddingRight: 40, flex: 1 }]}
                                     placeholder="********"
                                     placeholderTextColor="#555"
                                     value={password}
                                     onChangeText={setPassword}
-                                    secureTextEntry
+                                    // Controla visibilidade
+                                    secureTextEntry={!showPassword}
                                 />
+                                {/* Botão do Olho */}
+                                <TouchableOpacity 
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={{ padding: 10, position: 'absolute', right: 5 }}
+                                >
+                                    <FontAwesome 
+                                        name={showPassword ? "eye" : "eye-slash"} 
+                                        size={20} 
+                                        color={COLORS.textSecondary} 
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
 
@@ -162,13 +179,25 @@ export default function Cadastro() {
                             <View style={style.inputContainer}>
                                 <FontAwesome name="check-circle" size={18} color={COLORS.textSecondary} style={style.inputIcon} />
                                 <TextInput
-                                    style={style.input}
+                                    style={[style.input, { paddingRight: 40, flex: 1 }]}
                                     placeholder="********"
                                     placeholderTextColor="#555"
                                     value={confirmPassword}
                                     onChangeText={setConfirmPassword}
-                                    secureTextEntry
+                                    // Controla visibilidade
+                                    secureTextEntry={!showConfirmPassword}
                                 />
+                                {/* Botão do Olho (Confirmação) */}
+                                <TouchableOpacity 
+                                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    style={{ padding: 10, position: 'absolute', right: 5 }}
+                                >
+                                    <FontAwesome 
+                                        name={showConfirmPassword ? "eye" : "eye-slash"} 
+                                        size={20} 
+                                        color={COLORS.textSecondary} 
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
 

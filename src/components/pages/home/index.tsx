@@ -199,7 +199,7 @@ export default function Home() {
 
                 {/* --- QUEST ATIVA --- */}
                 <View style={style.sectionHeader}>
-                    <Text style={style.sectionTitle}>Quest Ativa</Text>
+                    <Text style={style.sectionTitle}>Desafios ativos</Text>
                     <TouchableOpacity style={style.seeAllButton} onPress={() => navegarPara('Desafios')}>
                         <Text style={style.seeAllText}>Ver todas</Text>
                     </TouchableOpacity>

@@ -9,10 +9,9 @@ import {
     Platform, 
     ActivityIndicator, 
     Alert,
-    StatusBar // Importante para o visual dark
+    StatusBar
 } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-// Certifique-se de importar LinearGradient
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -28,6 +27,9 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // 1. Estado para controlar a visibilidade da senha
+    const [showPassword, setShowPassword] = useState(false);
 
     async function handleLogin() {
         if (!email || !password) {
@@ -46,42 +48,36 @@ export default function Login() {
 
     return (
         <View style={style.container}>
-            {/* Garante que a barra de status fique clara sobre o fundo escuro */}
             <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
             {/* --- EFEITOS DE GRADIENTE NO FUNDO --- */}
-            
-            {/* Efeito Canto Superior Esquerdo (Roxo vibrante para transparente) */}
             <LinearGradient
                 colors={[COLORS.primary, 'transparent']}
                 start={{ x: 0.1, y: 0.1 }}
                 end={{ x: 0.8, y: 0.8 }}
                 style={style.backgroundEffectTopLeft}
             />
-
-            {/* Efeito Canto Inferior Direito (Roxo mais escuro para transparente) */}
             <LinearGradient
                 colors={['#4A148C', 'transparent']}
                 start={{ x: 0.8, y: 0.8 }}
                 end={{ x: 0.1, y: 0.1 }}
                 style={style.backgroundEffectBottomRight}
             />
-            {/* ------------------------------------ */}
-
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={{ flex: 1 }} // Ocupa o espaço restante
+                style={{ flex: 1 }}
             >
                 <View style={style.contentContainer}>
                     
                     <View style={style.logoContainer}>
-                      
+                        {/* Se quiser usar a imagem importada: source={LogoImg} */}
                         <Text style={style.appName}>FINANQUEST</Text>
                         <Text style={style.tagline}>Sua jornada financeira começa aqui.</Text>
                     </View>
 
                     <View style={style.formContainer}>
+                        {/* INPUT DE EMAIL */}
                         <View style={style.inputGroup}>
                             <Text style={style.label}>Email</Text>
                             <View style={style.inputContainer}>
@@ -98,18 +94,34 @@ export default function Login() {
                             </View>
                         </View>
 
+                        {/* INPUT DE SENHA COM BOTÃO DE OLHO */}
                         <View style={style.inputGroup}>
                             <Text style={style.label}>Senha</Text>
                             <View style={style.inputContainer}>
                                 <FontAwesome name="lock" size={20} color={COLORS.textSecondary} style={style.inputIcon} />
                                 <TextInput
-                                    style={style.input}
+                                    // Adicionamos paddingRight para o texto não ficar por baixo do ícone do olho
+                                    style={[style.input, { paddingRight: 40, flex: 1 }]} 
                                     placeholder="********"
                                     placeholderTextColor="#555"
                                     value={password}
                                     onChangeText={setPassword}
-                                    secureTextEntry
+                                    
+                                    // 2. Controla a visibilidade
+                                    secureTextEntry={!showPassword} 
                                 />
+
+                                {/* 3. Botão para alternar visibilidade */}
+                                <TouchableOpacity 
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    style={{ padding: 10, position: 'absolute', right: 5 }}
+                                >
+                                    <FontAwesome 
+                                        name={showPassword ? "eye" : "eye-slash"} 
+                                        size={20} 
+                                        color={COLORS.textSecondary} 
+                                    />
+                                </TouchableOpacity>
                             </View>
                         </View>
 
@@ -128,7 +140,7 @@ export default function Login() {
                                 {loading ? (
                                     <ActivityIndicator color="#FFF" />
                                 ) : (
-                                    <Text style={style.loginButtonText}>Entrar</Text>
+                                    <Text style={style.loginButtonText}>ENTRAR</Text>
                                 )}
                             </LinearGradient>
                         </TouchableOpacity>
