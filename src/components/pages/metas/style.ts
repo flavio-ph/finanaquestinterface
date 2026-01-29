@@ -1,14 +1,19 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
+
+const { width } = Dimensions.get('window');
 
 export const COLORS = {
     background: "#0F0F11",
     card: "#18181B",
     primary: "#7C3AED", // Roxo Neon
+    secondary: "#4C1D95",
+    accent: "#00E676",  // Verde Neon (para dinheiro/sucesso)
+    
     text: "#E4E4E7",
     textSecondary: "#A1A1AA",
-    success: "#00E676",
-    danger: "#FF5252",
-    border: "#27272A"
+    
+    border: "#27272A",
+    danger: "#FF5252"
 };
 
 export const style = StyleSheet.create({
@@ -18,139 +23,216 @@ export const style = StyleSheet.create({
     },
     contentContainer: {
         padding: 20,
-        paddingTop: 60, // Espaço para status bar
-        paddingBottom: 100, // Espaço para o menu
+        paddingTop: 60,
+        paddingBottom: 130, // Espaço para menu
     },
-    
-    // --- CABEÇALHO ALINHADO ---
-    headerRow: {
-        flexDirection: 'row', // Coloca lado a lado
-        justifyContent: 'space-between', // Separa nas pontas
-        alignItems: 'center', // Centraliza verticalmente (O Segredo)
-        marginBottom: 25,
+
+    // --- HEADER E RESUMO ---
+    headerContainer: {
+        marginBottom: 30,
     },
     title: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: "bold",
         color: COLORS.text,
-        letterSpacing: 0.5,
+        marginBottom: 5,
     },
-    addButton: {
-        width: 45,
-        height: 45,
-        borderRadius: 22.5,
-        backgroundColor: COLORS.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        
-        // Sombra/Glow
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.5,
-        shadowRadius: 10,
-        elevation: 8,
+    subtitle: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
     },
-    // ---------------------------
-
-    // Estilos dos Cards (Mantidos/Melhorados)
-    goalCard: {
-        backgroundColor: COLORS.card,
+    
+    // Card de Resumo (Topo)
+    summaryCard: {
+        marginTop: 20,
         borderRadius: 20,
         padding: 20,
-        marginBottom: 15,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        // Sombra Neon
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    summaryLabel: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+    },
+    summaryValue: {
+        color: '#FFF',
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginTop: 5,
+    },
+    summaryIconCircle: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    // --- BOTÃO ADICIONAR (Canto Superior) ---
+    addButton: {
+        position: 'absolute',
+        top: 10,
+        right: 0,
+        width: 45,
+        height: 45,
+        borderRadius: 14,
+        backgroundColor: COLORS.card,
         borderWidth: 1,
         borderColor: COLORS.border,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    // --- CARD DA META ---
+    goalCard: {
+        backgroundColor: COLORS.card,
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        position: 'relative',
     },
     goalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 15,
+    },
+    iconContainer: {
+        width: 45,
+        height: 45,
+        borderRadius: 12,
+        backgroundColor: 'rgba(124, 58, 237, 0.15)', // Roxo bem transparente
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
+        marginRight: 15,
+    },
+    goalInfo: {
+        flex: 1,
     },
     goalTitle: {
         fontSize: 18,
-        fontWeight: "bold",
+        fontWeight: 'bold',
         color: COLORS.text,
-        flex: 1,
+        marginBottom: 4,
     },
-    goalValues: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    valueText: {
-        fontSize: 14,
+    goalDeadline: {
+        fontSize: 12,
         color: COLORS.textSecondary,
     },
-    progressBarBackground: {
-        height: 8,
-        backgroundColor: "#27272A",
-        borderRadius: 4,
+
+    // Valores R$
+    goalValuesRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        marginBottom: 10,
+    },
+    currentValue: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: COLORS.primary,
+    },
+    targetValue: {
+        fontSize: 14,
+        color: COLORS.textSecondary,
+        marginBottom: 4,
+    },
+
+    // Barra de Progresso
+    progressBarContainer: {
+        height: 12,
+        backgroundColor: '#27272A',
+        borderRadius: 6,
         overflow: 'hidden',
+        marginBottom: 15,
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: COLORS.success,
-        borderRadius: 4,
-    },
-    
-    // Botões de Ação do Card
-    cardActions: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 15,
-        gap: 10,
-    },
-    actionButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 8,
-        backgroundColor: '#27272A',
-    },
-    actionText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: COLORS.text,
-    },
-    depositButton: {
-        backgroundColor: 'rgba(0, 230, 118, 0.15)', // Verde transparente
-    },
-    depositText: {
-        color: COLORS.success,
+        borderRadius: 6,
     },
 
-    // Modal
+    // Ações do Card
+    cardActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.05)',
+        paddingTop: 15,
+    },
+    percentBadge: {
+        backgroundColor: 'rgba(0, 230, 118, 0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    percentText: {
+        color: COLORS.accent,
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    depositButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.primary,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+    },
+    depositText: {
+        color: '#FFF',
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginLeft: 6,
+    },
+
+    // --- MODAL ---
     modalContainer: {
         flex: 1,
         justifyContent: 'flex-end',
         backgroundColor: 'rgba(0,0,0,0.8)',
     },
     modalContent: {
-        backgroundColor: COLORS.card,
-        borderTopLeftRadius: 25,
-        borderTopRightRadius: 25,
+        backgroundColor: '#18181B',
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
         padding: 25,
+        paddingBottom: 40,
         borderTopWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: COLORS.primary,
     },
     modalTitle: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: 'bold',
-        color: COLORS.text,
+        color: '#FFF',
         marginBottom: 20,
         textAlign: 'center',
     },
     input: {
-        backgroundColor: "#0F0F11",
+        backgroundColor: '#27272A',
+        color: '#FFF',
         borderRadius: 12,
         padding: 15,
-        color: COLORS.text,
         marginBottom: 15,
+        fontSize: 16,
         borderWidth: 1,
-        borderColor: COLORS.border,
+        borderColor: '#333',
     },
     modalButtons: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         gap: 15,
         marginTop: 10,
     },
@@ -159,15 +241,19 @@ export const style = StyleSheet.create({
         padding: 15,
         borderRadius: 12,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     cancelButton: {
-        backgroundColor: '#27272A',
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: COLORS.danger,
     },
     confirmButton: {
         backgroundColor: COLORS.primary,
     },
     buttonText: {
-        fontWeight: 'bold',
         color: '#FFF',
+        fontWeight: 'bold',
+        fontSize: 16,
     }
 });

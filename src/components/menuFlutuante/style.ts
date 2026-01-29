@@ -3,115 +3,109 @@ import { StyleSheet, Platform, Dimensions } from "react-native";
 const { width } = Dimensions.get('window');
 
 export const COLORS = {
-    background: '#0F0F11', 
+    // Fundo sólido escuro (Zinc-900) para cobrir o conteúdo atrás
+    barBackground: '#18181B', 
+    
     primary: '#7C3AED',    // Roxo Neon
-    activeIcon: '#FFF',    
-    inactiveIcon: '#6B7280', 
-    iconBgInactive: '#18181B', 
-    iconBgActive: '#7C3AED',   
-    modalOverlay: 'rgba(10, 10, 12, 0.95)',
-    modalBg: '#131315',
-    cardBg: '#1C1C1E'
+    secondary: '#4C1D95',
+    
+    activeIcon: '#7C3AED',    
+    inactiveIcon: '#52525B', // Cinza mais escuro para não chamar atenção
+    
+    // Sombras
+    shadow: '#7C3AED',
+    
+    modalOverlay: 'rgba(0, 0, 0, 0.85)',
+    modalBg: '#18181B',
+    cardBg: '#27272A'
 };
 
 export const style = StyleSheet.create({
-    container: {
-        // --- O SEGREDO PARA NÃO DESCER ---
-        position: 'absolute', 
-        bottom: Platform.OS === 'ios' ? 35 : 25, 
-        left: 0, 
+  container: {
+        position: 'absolute', // <--- OBRIGATÓRIO
+        bottom: 0,           // <--- GRUDA NO CHÃO
+        left: 0,
         right: 0,
-        // ---------------------------------
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999, // Fica acima de tudo
+        zIndex: 9999,        // <--- FICA POR CIMA DE TUDO
+        elevation: 20,       // <--- SOMBRA NO ANDROID
+    },
+    
+    // A "Gaveta"
+    menuBar: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.barBackground,
+        
+        width: '100%',
+        // Altura maior no iOS para compensar a barra home
+        height: Platform.OS === 'ios' ? 90 : 70, 
+        
+        // Bordas arredondadas APENAS em cima
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        
+        justifyContent: 'space-between',
+        alignItems: 'flex-start', // Alinha itens ao topo
+        paddingTop: 15,           // Espaço interno superior
+        paddingHorizontal: 30,    // Espaço lateral
+        
+        // Borda sutil no topo para separar do conteúdo
+        borderTopWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'rgba(255,255,255,0.08)',
+        
+        // Sombra invertida (para cima)
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
         elevation: 20,
     },
     
-    menuBar: {
-        flexDirection: 'row', // VOLTA A SER HORIZONTAL
-        backgroundColor: COLORS.background,
-        
-        width: width * 0.92,
-        maxWidth: 420,
-        height: 75,
-        borderRadius: 40,
-        
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        
-        // Sombra Neon
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.5,
-        shadowRadius: 20,
-        elevation: 15,
-        
-        borderWidth: 1,
-        borderColor: 'rgba(124, 58, 237, 0.3)', 
-    },
-    
+    // Item Individual
     menuItem: {
-        height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        minWidth: 60, 
+        width: 50,
+        height: 40, // Altura da área de toque
     },
 
-    // --- BOLHAS DOS ÍCONES (Mantido) ---
     iconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25, 
-        backgroundColor: COLORS.iconBgInactive, 
-        justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#27272A', 
+        justifyContent: 'center',
     },
     
-    activeIconContainer: {
-        backgroundColor: COLORS.primary, 
-        borderColor: '#A78BFA', 
+    // Ponto de Luz (Glow)
+    activeDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.primary,
+        marginTop: 4,
         shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.8,
-        shadowRadius: 15,
-        elevation: 20,
+        shadowOpacity: 1,
+        shadowRadius: 5,
+        elevation: 5,
     },
 
-    // BOTÃO CENTRAL (FLOAT)
+    // --- BOTÃO CENTRAL FLUTUANTE ---
     centerButtonContainer: {
-        top: -25, // Sobe para fora da barra
+        top: -35, // Sobe para fora da gaveta (efeito FAB)
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 10,
+        
     },
     centerButton: {
-        width: 68,
-        height: 68,
-        borderRadius: 34,
-        backgroundColor: COLORS.background, 
+        width: 60,
+        height: 60,
+        borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center',
         
-        borderWidth: 4,
-        borderColor: COLORS.background,
-        
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 5 },
-        shadowOpacity: 0.7,
-        shadowRadius: 18,
-        elevation: 15,
-    },
-    centerIconCircle: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 35,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: COLORS.primary, 
+        // Borda grossa da cor do fundo do app para "recortar" a gaveta visualmente
+        borderWidth: 6, 
+        borderColor: '#0F0F11', // Mesma cor do background da tela (Home)
     },
 
     // --- MODAL ---
@@ -122,30 +116,25 @@ export const style = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: COLORS.modalBg,
-        borderTopLeftRadius: 35,
-        borderTopRightRadius: 35,
-        padding: 25,
+        borderTopLeftRadius: 30,
+        borderTopRightRadius: 30,
+        padding: 30,
         paddingBottom: 50,
         borderTopWidth: 1,
-        borderColor: COLORS.primary, 
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: -10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 20,
+        borderColor: COLORS.primary,
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 25,
+        marginBottom: 30,
     },
-    modalTitle: { color: '#FFF', fontSize: 20, fontWeight: 'bold', letterSpacing: 1 },
+    modalTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold', letterSpacing: 1 },
     modalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 15, justifyContent: 'center' },
     modalItem: {
-        width: '45%', aspectRatio: 1.3, backgroundColor: COLORS.cardBg,
-        borderRadius: 25, justifyContent: 'center', alignItems: 'center',
-        borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.2)',
+        width: '45%', aspectRatio: 1.5, backgroundColor: COLORS.cardBg,
+        borderRadius: 16, justifyContent: 'center', alignItems: 'center',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
     },
-    modalItemText: { color: '#E4E4E7', marginTop: 10, fontSize: 14, fontWeight: '600' }
+    modalItemText: { color: '#E4E4E7', marginTop: 10, fontSize: 13, fontWeight: '600' }
 });

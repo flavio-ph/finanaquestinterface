@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { View, TouchableOpacity, Text, Modal, Animated, TouchableWithoutFeedback } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { style, COLORS } from './style';
 
 interface Props {
@@ -14,50 +15,54 @@ export default function FloatingMenu({ currentRoute }: Props) {
     const activeRoute = currentRoute || route.name;
     const [modalVisible, setModalVisible] = useState(false);
 
+    // Rotas do menu
     const routes = ['Home', 'Extrato', 'Metas', 'Menu'];
+    
+    // Animações
     const scaleAnims = useRef(routes.reduce((acc, r) => ({ ...acc, [r]: new Animated.Value(1) }), {} as any)).current;
     const centerButtonScale = useRef(new Animated.Value(1)).current;
 
     const navegar = (rota: string) => {
-        const anim = scaleAnims[rota] || new Animated.Value(1);
-        
+        // Animação de toque
         Animated.sequence([
-            Animated.timing(anim, { toValue: 1.3, duration: 150, useNativeDriver: true }),
-            Animated.spring(anim, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true })
+            Animated.timing(scaleAnims[rota], { toValue: 0.8, duration: 50, useNativeDriver: true }),
+            Animated.spring(scaleAnims[rota], { toValue: 1, friction: 4, useNativeDriver: true })
         ]).start();
 
         if (rota === 'Menu') {
-            setTimeout(() => setModalVisible(true), 100);
+            setModalVisible(true);
         } else {
             setModalVisible(false);
-            setTimeout(() => navigation.navigate(rota), 200);
+            navigation.navigate(rota);
         }
     };
 
     const animateCenterButton = () => {
         Animated.sequence([
-            Animated.timing(centerButtonScale, { toValue: 1.2, duration: 100, useNativeDriver: true }),
+            Animated.timing(centerButtonScale, { toValue: 0.9, duration: 100, useNativeDriver: true }),
             Animated.spring(centerButtonScale, { toValue: 1, friction: 3, tension: 100, useNativeDriver: true })
         ]).start();
+        
+        // Pequeno delay para a animação ser vista
         setTimeout(() => navigation.navigate('Transacao'), 150);
     };
 
     const isActive = (rota: string) => activeRoute === rota;
 
-    const RenderTab = ({ name, iconLib: IconLib, iconName, size = 20 }: any) => {
+    // Componente de Ícone
+    const RenderTab = ({ name, iconName, size = 24 }: any) => {
         const active = isActive(name);
         const color = active ? COLORS.activeIcon : COLORS.inactiveIcon;
 
-        const containerStyles = [
-            style.iconContainer,
-            active && style.activeIconContainer,
-            { transform: [{ scale: scaleAnims[name] }] }
-        ];
-
         return (
-            <TouchableOpacity style={style.menuItem} onPress={() => navegar(name)} activeOpacity={1}>
-                <Animated.View style={containerStyles}>
-                    <IconLib name={iconName} size={size} color={color} />
+            <TouchableOpacity 
+                style={style.menuItem} 
+                onPress={() => navegar(name)} 
+                activeOpacity={1}
+            >
+                <Animated.View style={[style.iconContainer, { transform: [{ scale: scaleAnims[name] }] }]}>
+                    <Feather name={iconName} size={size} color={color} />
+                    {active && <View style={style.activeDot} />}
                 </Animated.View>
             </TouchableOpacity>
         );
@@ -68,46 +73,58 @@ export default function FloatingMenu({ currentRoute }: Props) {
             <View style={style.container}>
                 <View style={style.menuBar}>
                     
-                    {/* Ordem Vertical: Cima para Baixo */}
-                    <RenderTab name="Home" iconLib={FontAwesome} iconName="home" size={22} />
-                    <RenderTab name="Extrato" iconLib={FontAwesome} iconName="list-alt" size={20} />
+                    {/* Esquerda */}
+                    <RenderTab name="Home" iconName="home" />
+                    <RenderTab name="Extrato" iconName="list" />
 
-                    {/* Botão Central (Agora deslocado para a esquerda) */}
-                    <TouchableOpacity style={style.centerButtonContainer} onPress={animateCenterButton} activeOpacity={1}>
-                        <Animated.View style={[style.centerButton, { transform: [{ scale: centerButtonScale }] }]}>
-                            <View style={style.centerIconCircle}>
-                                <FontAwesome name="plus" size={24} color="#FFF" />
-                            </View>
+                    {/* Botão Central (Saindo da Gaveta) */}
+                    <TouchableOpacity style={style.centerButtonContainer} onPress={animateCenterButton} activeOpacity={0.9}>
+                        <Animated.View style={{ transform: [{ scale: centerButtonScale }] }}>
+                            <LinearGradient
+                                colors={[COLORS.primary, '#4C1D95']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={style.centerButton}
+                            >
+                                <Feather name="plus" size={28} color="#FFF" />
+                            </LinearGradient>
                         </Animated.View>
                     </TouchableOpacity>
 
-                    <RenderTab name="Metas" iconLib={FontAwesome} iconName="bullseye" size={22} />
-                    <RenderTab name="Menu" iconLib={MaterialIcons} iconName="grid-view" size={24} />
+                    {/* Direita */}
+                    <RenderTab name="Metas" iconName="target" />
+                    <RenderTab name="Menu" iconName="grid" />
 
                 </View>
             </View>
 
-            {/* Modal permanece igual */}
+            {/* Modal de Menu Extra */}
             <Modal visible={modalVisible} transparent={true} animationType="fade" onRequestClose={() => setModalVisible(false)}>
                 <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
                     <View style={style.modalOverlay}>
                         <TouchableWithoutFeedback>
                             <View style={style.modalContent}>
                                 <View style={style.modalHeader}>
-                                    <Text style={style.modalTitle}>MENU RÁPIDO</Text>
+                                    <Text style={style.modalTitle}>MENU</Text>
                                     <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                        <Ionicons name="close-circle" size={32} color={COLORS.primary} />
+                                        <Ionicons name="close" size={24} color={COLORS.inactiveIcon} />
                                     </TouchableOpacity>
                                 </View>
+                                
                                 <View style={style.modalGrid}>
                                     {[
                                         { route: 'Perfil', icon: 'user', color: COLORS.primary, label: 'Perfil' },
-                                        { route: 'Desafios', icon: 'shield', color: '#F59E0B', label: 'Desafios' },
-                                        { route: 'Conquistas', icon: 'trophy', color: '#3B82F6', label: 'Rank' },
+                                        { route: 'Desafios', icon: 'shield', color: '#F59E0B', label: 'Quests' },
+                                        { route: 'Conquistas', icon: 'award', color: '#3B82F6', label: 'Rank' },
                                         { route: 'Relatorio', icon: 'pie-chart', color: '#EC4899', label: 'Dados' }
                                     ].map((item, index) => (
-                                        <TouchableOpacity key={index} style={style.modalItem} onPress={() => { setModalVisible(false); navigation.navigate(item.route); }}>
-                                            <FontAwesome name={item.icon as any} size={30} color={item.color} />
+                                        <TouchableOpacity 
+                                            key={index} 
+                                            style={style.modalItem} 
+                                            onPress={() => { setModalVisible(false); navigation.navigate(item.route); }}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Feather name={item.icon as any} size={24} color={item.color} />
                                             <Text style={style.modalItemText}>{item.label}</Text>
                                         </TouchableOpacity>
                                     ))}

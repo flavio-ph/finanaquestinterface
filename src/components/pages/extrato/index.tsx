@@ -1,13 +1,16 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useFocusEffect, useNavigation, NavigationProp } from '@react-navigation/native';
-import { FontAwesome } from '@expo/vector-icons';
+import React, { useState, useCallback, useContext } from 'react';
+import { 
+    View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert 
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { style, COLORS } from './style';
+
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
+import { AuthContext } from '../../../services/authContext';
 import api from '../../../services/api';
 
-// Tipagem
-interface TransactionData {
+interface Transaction {
     id: number;
     description: string;
     amount: number;
@@ -16,13 +19,15 @@ interface TransactionData {
 }
 
 export default function Extrato() {
-    const navigation = useNavigation<NavigationProp<any>>();
-    
-    const [loading, setLoading] = useState(true);
-    const [allTransactions, setAllTransactions] = useState<TransactionData[]>([]);
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const navigation = useNavigation<any>();
+    const { user } = useContext(AuthContext);
 
-    // Carregar dados ao entrar na tela
+    const [loading, setLoading] = useState(true);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
     useFocusEffect(
         useCallback(() => {
             fetchData();
@@ -31,153 +36,168 @@ export default function Extrato() {
 
     async function fetchData() {
         try {
-            // Só ativa loading visual se a lista estiver vazia (primeira carga)
-            if (allTransactions.length === 0) setLoading(true);
+            // Loading suave: só mostra spinner se a lista estiver vazia
+            if(transactions.length === 0) setLoading(true);
             
             const response = await api.get('/api/transactions');
-            setAllTransactions(response.data);
-            
+            setTransactions(response.data);
         } catch (error) {
-            console.log("Erro ao buscar extrato:", error);
+            console.log("Erro ao buscar transações");
         } finally {
             setLoading(false);
         }
     }
 
-    // --- LÓGICA DE FILTRO ---
-    const getFilteredTransactions = () => {
-        const selMonth = selectedDate.getMonth();
-        const selYear = selectedDate.getFullYear();
+    // --- LÓGICA DE FILTRO E CÁLCULO ---
+    const filteredList = transactions.filter(t => {
+        const d = new Date(t.date);
+        return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-        return allTransactions.filter(t => {
-            const parts = t.date.split('-'); // YYYY-MM-DD
-            // Cria data local segura
-            const tDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-            return tDate.getMonth() === selMonth && tDate.getFullYear() === selYear;
-        }).sort((a, b) => {
-            // Ordena por data (mais recente primeiro) e depois por ID
-            return new Date(b.date).getTime() - new Date(a.date).getTime() || b.id - a.id;
-        });
-    };
+    const incomeTotal = filteredList
+        .filter(t => t.type === 'RECEITA')
+        .reduce((acc, curr) => acc + Number(curr.amount), 0);
 
-    const currentTransactions = getFilteredTransactions();
+    const expenseTotal = filteredList
+        .filter(t => t.type === 'DESPESA')
+        .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    // ----------------------------------
 
-    // --- CÁLCULO DO SALDO DO MÊS (Opcional, mas útil) ---
-    const monthBalance = currentTransactions.reduce((acc, t) => {
-        return t.type === 'RECEITA' ? acc + t.amount : acc - t.amount;
-    }, 0);
+    function changeMonth(direction: -1 | 1) {
+        let newMonth = selectedMonth + direction;
+        let newYear = selectedYear;
+        
+        if (newMonth > 11) { newMonth = 0; newYear++; }
+        if (newMonth < 0) { newMonth = 11; newYear--; }
+        
+        setSelectedMonth(newMonth);
+        setSelectedYear(newYear);
+    }
 
-    // --- NAVEGAÇÃO ---
-    const handlePrevMonth = () => {
-        const newDate = new Date(selectedDate);
-        newDate.setMonth(newDate.getMonth() - 1);
-        setSelectedDate(newDate);
-    };
+    const formatCurrency = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const getMonthName = (m: number) => new Date(2023, m, 1).toLocaleString('pt-BR', { month: 'long' });
 
-    const handleNextMonth = () => {
-        const newDate = new Date(selectedDate);
-        newDate.setMonth(newDate.getMonth() + 1);
-        setSelectedDate(newDate);
-    };
-
-    const handleEdit = (transaction: TransactionData) => {
-        // Navega para a tela de Transação passando os dados para edição
-        // @ts-ignore
-        navigation.navigate('Transacao', { 
-            transactionToEdit: transaction 
-        });
-    };
-
-    // --- FORMATAÇÃO ---
-    const formatCurrency = (value: number) => {
-        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    };
-
-    const getMonthLabel = () => {
-        const month = selectedDate.toLocaleDateString('pt-BR', { month: 'long' });
-        const year = selectedDate.getFullYear();
-        return `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
-    };
-
-    const formatDate = (dateString: string) => {
-        const parts = dateString.split('-');
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    };
-
-    if (loading) {
-        return (
-            <View style={[style.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+    function handleTransactionPress(t: Transaction) {
+        Alert.alert(
+            "Opções",
+            `Transação: ${t.description}`,
+            [
+                { text: "Cancelar", style: "cancel" },
+                { 
+                    text: "Excluir", 
+                    style: "destructive", 
+                    onPress: async () => {
+                        try {
+                            await api.delete(`/api/transactions/${t.id}`);
+                            fetchData();
+                        } catch(e) { Alert.alert("Erro", "Falha ao excluir"); }
+                    } 
+                }
+            ]
         );
     }
 
+    // Ícone dinâmico baseado no tipo (simples) ou descrição (avançado se quiser implementar depois)
+    const getIcon = (type: string) => type === 'RECEITA' ? 'arrow-up-bold' : 'cart-outline';
+
     return (
         <View style={style.container}>
-            <ScrollView contentContainerStyle={style.contentContainer}>
-                <Text style={style.pageTitle}>Extrato</Text>
+            <ScrollView contentContainerStyle={style.contentContainer} showsVerticalScrollIndicator={false}>
+                
+                {/* HEADER */}
+                <View style={style.header}>
+                    <Text style={style.title}>Extrato</Text>
+                    <Text style={style.subtitle}>Histórico de suas atividades</Text>
+                </View>
 
-                {/* Seletor de Mês */}
+                {/* SELETOR DE MÊS */}
                 <View style={style.monthSelector}>
-                    <TouchableOpacity style={style.monthNavButton} onPress={handlePrevMonth}>
-                        <FontAwesome name="chevron-left" size={16} color={COLORS.primary} />
+                    <TouchableOpacity onPress={() => changeMonth(-1)} style={style.monthButton}>
+                        <FontAwesome name="chevron-left" size={14} color={COLORS.primary} />
                     </TouchableOpacity>
                     
-                    <Text style={style.monthLabel}>{getMonthLabel()}</Text>
-                    
-                    <TouchableOpacity style={style.monthNavButton} onPress={handleNextMonth}>
-                        <FontAwesome name="chevron-right" size={16} color={COLORS.primary} />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Resumo Rápido */}
-                <View style={style.monthSummary}>
-                    <Text style={style.summaryText}>Balanço do mês:</Text>
-                    <Text style={[style.summaryValue, { color: monthBalance >= 0 ? COLORS.income : COLORS.expense }]}>
-                        {formatCurrency(monthBalance)}
+                    <Text style={style.monthText}>
+                        {getMonthName(selectedMonth)} <Text style={{color: COLORS.textSecondary}}>{selectedYear}</Text>
                     </Text>
+                    
+                    <TouchableOpacity onPress={() => changeMonth(1)} style={style.monthButton}>
+                        <FontAwesome name="chevron-right" size={14} color={COLORS.primary} />
+                    </TouchableOpacity>
                 </View>
 
-                {/* Lista */}
-                {currentTransactions.length === 0 ? (
-                    <View style={style.emptyState}>
-                        <FontAwesome name="file-text-o" size={48} color={COLORS.textSecondary} />
-                        <Text style={style.emptyText}>Sem movimentações neste mês.</Text>
+                {/* RESUMO DO MÊS (CARDS) */}
+                <View style={style.summaryRow}>
+                    <View style={style.summaryCard}>
+                        <View style={[style.summaryIconBox, { backgroundColor: 'rgba(0, 230, 118, 0.1)' }]}>
+                            <FontAwesome name="arrow-up" size={16} color={COLORS.income} />
+                        </View>
+                        <View>
+                            <Text style={style.summaryLabel}>Entradas</Text>
+                            <Text style={[style.summaryValue, { color: COLORS.income }]}>{formatCurrency(incomeTotal)}</Text>
+                        </View>
+                    </View>
+
+                    <View style={style.summaryCard}>
+                        <View style={[style.summaryIconBox, { backgroundColor: 'rgba(255, 82, 82, 0.1)' }]}>
+                            <FontAwesome name="arrow-down" size={16} color={COLORS.expense} />
+                        </View>
+                        <View>
+                            <Text style={style.summaryLabel}>Saídas</Text>
+                            <Text style={[style.summaryValue, { color: COLORS.expense }]}>{formatCurrency(expenseTotal)}</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* LISTA DE TRANSAÇÕES */}
+                <Text style={style.sectionTitle}>Transações</Text>
+
+                {loading ? (
+                    <ActivityIndicator color={COLORS.primary} size="large" style={{marginTop: 50}} />
+                ) : filteredList.length === 0 ? (
+                    <View style={style.emptyContainer}>
+                        <MaterialCommunityIcons name="clipboard-text-outline" size={60} color={COLORS.textSecondary} />
+                        <Text style={style.emptyText}>Nenhuma movimentação neste mês.</Text>
                     </View>
                 ) : (
-                    currentTransactions.map((t) => (
+                    filteredList.map((item) => (
                         <TouchableOpacity 
-                            key={t.id} 
-                            style={style.transactionItem}
-                            onPress={() => handleEdit(t)} // Clique para editar
+                            key={item.id} 
+                            style={style.transactionCard} 
+                            onPress={() => handleTransactionPress(item)}
                             activeOpacity={0.7}
                         >
+                            {/* Ícone */}
                             <View style={[
-                                style.transactionIconContainer, 
-                                t.type === 'DESPESA' ? style.expenseIconBg : style.incomeIconBg
+                                style.tIconContainer, 
+                                { backgroundColor: item.type === 'RECEITA' ? 'rgba(0, 230, 118, 0.1)' : 'rgba(255, 82, 82, 0.1)' }
                             ]}>
-                                <FontAwesome 
-                                    name={t.type === 'DESPESA' ? "cutlery" : "dollar"} 
-                                    size={18} 
-                                    color={t.type === 'DESPESA' ? COLORS.expense : COLORS.income} 
+                                <MaterialCommunityIcons 
+                                    name={item.type === 'RECEITA' ? "bank-transfer-in" : "shopping-outline"} 
+                                    size={24} 
+                                    color={item.type === 'RECEITA' ? COLORS.income : COLORS.expense} 
                                 />
                             </View>
-                            
-                            <View style={style.transactionDetails}>
-                                <Text style={style.transactionDescription}>{t.description}</Text>
-                                <Text style={style.transactionDate}>{formatDate(t.date)}</Text>
+
+                            {/* Detalhes */}
+                            <View style={style.tContent}>
+                                <Text style={style.tTitle} numberOfLines={1}>{item.description}</Text>
+                                <Text style={style.tDate}>
+                                    {new Date(item.date).toLocaleDateString('pt-BR')}
+                                </Text>
                             </View>
-                            
+
+                            {/* Valor */}
                             <Text style={[
-                                style.transactionAmount, 
-                                { color: t.type === 'DESPESA' ? COLORS.expense : COLORS.income }
+                                style.tAmount, 
+                                { color: item.type === 'RECEITA' ? COLORS.income : COLORS.expense }
                             ]}>
-                                {t.type === 'DESPESA' ? '- ' : '+ '} 
-                                {formatCurrency(t.amount)}
+                                {item.type === 'RECEITA' ? '+ ' : '- '}
+                                {formatCurrency(item.amount)}
                             </Text>
                         </TouchableOpacity>
                     ))
                 )}
+
             </ScrollView>
 
             <FloatingMenu currentRoute="Extrato" />

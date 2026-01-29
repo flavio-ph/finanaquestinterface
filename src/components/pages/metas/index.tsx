@@ -3,7 +3,8 @@ import {
     View, Text, TouchableOpacity, ScrollView, Modal, 
     TextInput, ActivityIndicator, Alert 
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import Toast from 'react-native-toast-message';
 
 import { style, COLORS } from './style';
@@ -11,13 +12,13 @@ import FloatingMenu from '../../menuFlutuante/menuFlutuante';
 import { AuthContext } from '../../../services/authContext';
 import api from '../../../services/api';
 
-// Interface para tipar os dados da meta
 interface Goal {
     id: number;
-    title: string;
+    name: string; // <--- CORREÇÃO: Backend envia 'name'
     currentAmount: number;
     targetAmount: number;
     progressPercentage: number;
+    deadline?: string;
 }
 
 export default function Metas() {
@@ -37,7 +38,6 @@ export default function Metas() {
 
     async function fetchGoals() {
         try {
-            // CORREÇÃO 1: Adicionado /api
             const response = await api.get('/api/goals');
             setGoals(response.data);
         } catch (error) {
@@ -48,89 +48,125 @@ export default function Metas() {
     }
 
     async function handleCreateGoal() {
-        if (!title || !targetAmount) return Alert.alert("Erro", "Preencha os campos!");
-        
+        if (!title.trim() || !targetAmount.trim() || !deadline.trim()) {
+            return Alert.alert("Campos Vazios", "Preencha todos os campos.");
+        }
+
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(deadline)) {
+            return Alert.alert("Data Inválida", "Use o formato: AAAA-MM-DD");
+        }
+
         try {
-            // CORREÇÃO 2: Adicionado /api e verificação do nome do campo
-            // Se o seu Java DTO espera "name", mude para { name: title, ... }
-            // Se espera "title", mantenha { title, ... }
             await api.post('/api/goals', {
-                title: title, 
+                name: title,
                 targetAmount: parseFloat(targetAmount.replace(',', '.')),
-                deadline: deadline || null
+                deadline: deadline
             });
             
-            Toast.show({ type: 'success', text1: 'Meta criada!' });
+            Toast.show({ type: 'success', text1: 'Nova conquista desbloqueada!', text2: 'Meta criada com sucesso.' });
             setModalVisible(false);
             setTitle(""); setTargetAmount(""); setDeadline("");
             fetchGoals();
-            
-        } catch (error) {
-            console.log(error);
-            Alert.alert("Erro", "Falha ao criar meta.");
+        } catch (error: any) {
+            const msg = error.response?.data?.message || "Erro ao criar meta.";
+            Alert.alert("Erro", msg);
         }
     }
 
     async function handleDelete(id: number) {
-        try {
-            // CORREÇÃO 3: Adicionado /api
-            await api.delete(`/api/goals/${id}`);
-            fetchGoals();
-        } catch (error) {
-            Alert.alert("Erro", "Não foi possível excluir.");
-        }
+        Alert.alert(
+            "Excluir Meta",
+            "Tem certeza? Todo o progresso será perdido.",
+            [
+                { text: "Cancelar", style: "cancel" },
+                { 
+                    text: "Excluir", 
+                    style: "destructive", 
+                    onPress: async () => {
+                        try {
+                            await api.delete(`/api/goals/${id}`);
+                            fetchGoals();
+                        } catch (error) {
+                            Alert.alert("Erro", "Não foi possível excluir.");
+                        }
+                    }
+                }
+            ]
+        );
     }
 
     const formatCurrency = (val: number) => 
         val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+    const handleDateChange = (text: string) => {
+        let cleanText = text.replace(/[^0-9-]/g, '');
+        if (cleanText.length > 10) return;
+        setDeadline(cleanText);
+    };
+
     return (
         <View style={style.container}>
-            <ScrollView contentContainerStyle={style.contentContainer}>
+            <ScrollView contentContainerStyle={style.contentContainer} showsVerticalScrollIndicator={false}>
                 
                 {/* --- HEADER --- */}
-                <View style={style.headerRow}>
-                    <Text style={style.title}>Minhas Metas</Text>
+                <View style={style.headerContainer}>
+                    <Text style={style.title}>Metas</Text>
+                    <Text style={style.subtitle}>Foco no objetivo</Text>
                     
                     <TouchableOpacity 
                         style={style.addButton} 
                         onPress={() => setModalVisible(true)}
                         activeOpacity={0.7}
                     >
-                        <FontAwesome name="plus" size={20} color="#FFF" />
+                        <FontAwesome name="plus" size={20} color={COLORS.primary} />
                     </TouchableOpacity>
                 </View>
-                {/* -------------- */}
 
+                {/* --- LISTAGEM --- */}
                 {loading ? (
                     <ActivityIndicator color={COLORS.primary} size="large" style={{marginTop: 50}} />
                 ) : goals.length === 0 ? (
-                    <Text style={{color: COLORS.textSecondary, textAlign: 'center', marginTop: 50}}>
-                        Nenhuma meta ativa. Crie uma agora!
-                    </Text>
+                    <View style={{alignItems: 'center', marginTop: 50, opacity: 0.5}}>
+                        <FontAwesome name="flag-o" size={50} color={COLORS.textSecondary} />
+                        <Text style={{color: COLORS.textSecondary, marginTop: 15}}>Nenhuma meta ativa.</Text>
+                    </View>
                 ) : (
                     goals.map((item) => (
                         <View key={item.id} style={style.goalCard}>
+                            {/* Cabeçalho do Card */}
                             <View style={style.goalHeader}>
-                                <Text style={style.goalTitle}>{item.title}</Text>
-                                <TouchableOpacity onPress={() => handleDelete(item.id)}>
-                                    <FontAwesome name="trash" size={16} color={COLORS.textSecondary} />
+                                <View style={{flexDirection: 'row', alignItems: 'center', flex: 1}}>
+                                    <View style={style.iconContainer}>
+                                        <MaterialCommunityIcons name="target" size={24} color={COLORS.primary} />
+                                    </View>
+                                    <View style={style.goalInfo}>
+                                        {/* CORREÇÃO: item.name em vez de item.title */}
+                                        <Text style={style.goalTitle} numberOfLines={1}>{item.name}</Text>
+                                        <Text style={style.goalDeadline}>
+                                            <FontAwesome name="calendar" size={10} /> {item.deadline ? new Date(item.deadline).toLocaleDateString('pt-BR') : 'Sem prazo'}
+                                        </Text>
+                                    </View>
+                                </View>
+                                <TouchableOpacity onPress={() => handleDelete(item.id)} style={{padding: 5}}>
+                                    <FontAwesome name="trash-o" size={18} color={COLORS.danger} />
                                 </TouchableOpacity>
                             </View>
                             
-                            <View style={style.goalValues}>
-                                <Text style={style.valueText}>{formatCurrency(item.currentAmount)}</Text>
-                                <Text style={style.valueText}>{formatCurrency(item.targetAmount)}</Text>
+                            {/* Valores */}
+                            <View style={style.goalValuesRow}>
+                                <Text style={style.currentValue}>{formatCurrency(item.currentAmount)}</Text>
+                                <Text style={style.targetValue}> / {formatCurrency(item.targetAmount)}</Text>
                             </View>
 
-                            <View style={style.progressBarBackground}>
-                                <View style={[style.progressBarFill, { width: `${Math.min(item.progressPercentage, 100)}%` }]} />
-                            </View>
-                            
-                            <View style={style.cardActions}>
-                                <TouchableOpacity style={[style.actionButton, style.depositButton]}>
-                                    <Text style={[style.actionText, style.depositText]}>Depositar</Text>
-                                </TouchableOpacity>
+                            {/* Barra de Progresso Limpa */}
+                            <View style={style.progressBarContainer}>
+                                <LinearGradient
+                                    colors={[COLORS.primary, '#D946EF']} 
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={[style.progressBarFill, { width: `${Math.min(item.progressPercentage, 100)}%` }]}
+                                />
                             </View>
                         </View>
                     ))
@@ -138,33 +174,50 @@ export default function Metas() {
 
             </ScrollView>
 
-            {/* Menu fora do ScrollView */}
             <FloatingMenu currentRoute="Metas" />
 
-            {/* Modal de Criação */}
-            <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+            {/* MODAL DE CRIAÇÃO (MANTIDO) */}
+            <Modal 
+                visible={modalVisible} 
+                transparent 
+                animationType="slide" 
+                onRequestClose={() => setModalVisible(false)}
+            >
                 <View style={style.modalContainer}>
                     <View style={style.modalContent}>
                         <Text style={style.modalTitle}>Nova Meta</Text>
                         
                         <TextInput 
                             style={style.input} 
-                            placeholder="Nome da Meta (ex: Viagem)" 
-                            placeholderTextColor={COLORS.textSecondary}
-                            value={title} onChangeText={setTitle}
+                            placeholder="Nome (ex: PS5, Viagem)" 
+                            placeholderTextColor="#666"
+                            value={title} 
+                            onChangeText={setTitle}
                         />
+
                         <TextInput 
                             style={style.input} 
-                            placeholder="Valor Alvo (ex: 5000)" 
-                            placeholderTextColor={COLORS.textSecondary}
+                            placeholder="Valor Alvo (R$)" 
+                            placeholderTextColor="#666"
                             keyboardType="numeric"
-                            value={targetAmount} onChangeText={setTargetAmount}
+                            value={targetAmount} 
+                            onChangeText={setTargetAmount}
+                        />
+
+                        <TextInput 
+                            style={style.input} 
+                            placeholder="Data Limite (AAAA-MM-DD)" 
+                            placeholderTextColor="#666"
+                            value={deadline} 
+                            onChangeText={handleDateChange}
+                            maxLength={10}
                         />
 
                         <View style={style.modalButtons}>
                             <TouchableOpacity style={[style.button, style.cancelButton]} onPress={() => setModalVisible(false)}>
-                                <Text style={style.buttonText}>Cancelar</Text>
+                                <Text style={{color: COLORS.danger, fontWeight: 'bold'}}>Cancelar</Text>
                             </TouchableOpacity>
+                            
                             <TouchableOpacity style={[style.button, style.confirmButton]} onPress={handleCreateGoal}>
                                 <Text style={style.buttonText}>Criar Meta</Text>
                             </TouchableOpacity>

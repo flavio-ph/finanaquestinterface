@@ -1,283 +1,218 @@
-import { StyleSheet, Dimensions } from "react-native";
+import { StyleSheet } from "react-native";
 
 export const COLORS = {
-    primary: '#6A1B9A',
-    primaryDark: '#4A148C',
-    accent: '#00E676',       // Verde Neon para destaque/sucesso
-    secondary: '#FFD54F',    // Amarelo para XP/Ouro
-    background: '#0D0D0D',   // Fundo super escuro
-    card: '#1E1E1E',         // Fundo dos cards
-    cardHighlight: '#2C2C2C', // Fundo alternativo
-    textPrimary: '#FFFFFF',
-    textSecondary: '#A0A0A0',
-    income: '#4CAF50',
-    expense: '#F44336',
-    border: '#333333'
+    background: "#0F0F11",
+    card: "#18181B",
+    primary: "#7C3AED",   // Roxo Principal
+    secondary: "#4C1D95", // Roxo Escuro
+    income: "#00E676",    // Verde Neon
+    expense: "#FF5252",   // Vermelho Suave
+    text: "#E4E4E7",      // Branco Gelo
+    textSecondary: "#A1A1AA", // Cinza
 };
-
-const { width } = Dimensions.get('window');
 
 export const style = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.background,
+        position: 'relative',
     },
-    // Gradiente de fundo sutil (se quiser usar na tela toda) ou apenas container
     contentContainer: {
         padding: 20,
-        paddingTop: 50, // Mais espaço para a StatusBar
-        paddingBottom: 100,
+        paddingTop: 60,
+        // Espaço extra em baixo para o menu "gaveta" não tapar o conteúdo
+        paddingBottom: 130, 
     },
 
-    // --- HEADER ---
+    // --- Header (Perfil) ---
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 25,
     },
-    userProfile: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    avatarContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: COLORS.cardHighlight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: COLORS.primary,
-        marginRight: 12,
-    },
-    avatarText: { // Caso use iniciais
-        fontSize: 20,
-        color: COLORS.primary,
-        fontWeight: 'bold'
-    },
-    greetingContainer: {
-        justifyContent: 'center',
-    },
-    welcomeText: {
-        fontSize: 14,
-        color: COLORS.textSecondary,
-    },
-    userName: {
-        fontSize: 18,
+    greeting: {
+        fontSize: 24,
         fontWeight: 'bold',
-        color: COLORS.textPrimary,
+        color: COLORS.text,
     },
-    userLevelBadge: {
-        backgroundColor: COLORS.primary,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 8,
-        marginTop: 4,
-        alignSelf: 'flex-start',
-    },
-    userLevelText: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: '#FFF',
-    },
-
-    // --- XP BAR (Gamification) ---
-    xpContainer: {
-        width: '35%',
-        alignItems: 'flex-end',
-    },
-    xpLabelRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 6,
-        gap: 6,
-    },
-    xpLabel: {
+    levelText: {
         fontSize: 12,
-        fontWeight: 'bold',
-        color: COLORS.secondary,
-    },
-    xpTrack: {
-        width: '100%',
-        height: 8,
-        backgroundColor: '#333',
-        borderRadius: 4,
-        overflow: 'hidden',
-    },
-    xpFill: {
-        height: '100%',
-        borderRadius: 4,
-    },
-    xpValue: {
-        fontSize: 10,
-        color: COLORS.textSecondary,
-        marginTop: 4,
-    },
-
-    // --- CARD DE SALDO (Hero Card) ---
-    balanceCard: {
-        borderRadius: 24,
-        padding: 24,
-        marginBottom: 24,
-        // Sombras suaves
-        shadowColor: COLORS.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
-        elevation: 8,
-    },
-    balanceLabel: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.8)',
-        marginBottom: 8,
+        color: COLORS.primary,
+        fontWeight: '600',
+        marginTop: 2,
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
-    balanceAmount: {
-        fontSize: 36,
-        fontWeight: '700',
-        color: '#FFF',
-        marginBottom: 24,
-    },
-    financeRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    financeItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        backgroundColor: 'rgba(0,0,0,0.2)', // Fundo escuro semitransparente
-        padding: 12,
-        borderRadius: 16,
-        flex: 0.48, // Ocupar quase metade cada
-    },
-    financeIconBox: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    financeInfo: {
-        flex: 1,
-    },
-    financeLabel: {
-        fontSize: 10,
-        color: 'rgba(255,255,255,0.7)',
-    },
-    financeValue: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#FFF',
-    },
-
-    // --- SEÇÕES GERAIS ---
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
-    },
-    seeAllButton: {
-        padding: 4,
-    },
-    seeAllText: {
-        fontSize: 12,
-        color: COLORS.primary,
-        fontWeight: '600',
-    },
-
-    // --- CARD DE DESAFIO (Quest) ---
-    questCard: {
+    
+    // Foto de Perfil
+    profileImageContainer: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         backgroundColor: COLORS.card,
-        borderRadius: 20,
-        padding: 16,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: COLORS.border,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    questIconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: 'rgba(106, 27, 154, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        borderWidth: 1,
+        borderColor: '#333',
+        overflow: 'hidden', // Garante que a imagem fique redonda
     },
-    questContent: {
-        flex: 1,
+    profileImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
     },
-    questTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: COLORS.textPrimary,
-        marginBottom: 4,
+
+    // --- Barra de XP ---
+    xpContainer: {
+        marginBottom: 25,
     },
-    questDesc: {
-        fontSize: 12,
-        color: COLORS.textSecondary,
+    xpHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         marginBottom: 8,
     },
-    questProgressTrack: {
-        height: 6,
-        backgroundColor: '#333',
-        borderRadius: 3,
+    xpLabel: { 
+        color: COLORS.textSecondary, 
+        fontSize: 12, 
+        fontWeight: 'bold' 
+    },
+    xpPercent: { 
+        color: COLORS.text, 
+        fontSize: 12, 
+        fontWeight: 'bold' 
+    },
+    xpBarBackground: {
+        height: 8,
+        backgroundColor: '#27272A',
+        borderRadius: 4,
         overflow: 'hidden',
     },
-    questProgressFill: {
+    xpBarFill: {
         height: '100%',
-        backgroundColor: COLORS.primary,
-        borderRadius: 3,
+        borderRadius: 4,
     },
 
-    // --- LISTA DE TRANSAÇÕES ---
-    transactionList: {
-        gap: 12,
+    // --- Cartão de Saldo (Minimalista & Moderno) ---
+    balanceCard: {
+        padding: 25,
+        borderRadius: 30, // Bordas bem arredondadas
+        marginBottom: 30,
+        
+        // Sombra suave e colorida (Glow)
+        shadowColor: "#7C3AED",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 10,
+        
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)', // Borda sutil "vidro"
     },
-    transactionItem: {
-        backgroundColor: COLORS.card,
-        borderRadius: 16,
-        padding: 16,
+    balanceHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    balanceLabel: { 
+        fontSize: 14, 
+        color: 'rgba(255,255,255,0.7)', 
+        textTransform: 'uppercase', 
+        letterSpacing: 1, 
+        fontWeight: '600' 
+    },
+    balanceValue: { 
+        fontSize: 40, 
+        fontWeight: 'bold', 
+        color: '#FFF', 
+        marginBottom: 25,
+        letterSpacing: -1, // Aproxima os números para ficar moderno
+    },
+    
+    // Área de Receita/Despesa (Grid)
+    balanceRow: { 
+        flexDirection: 'row', 
+        gap: 15, // Espaço entre os cartões
+    },
+    
+    // Mini Cards de Estatística (Glassmorphism)
+    miniStatCard: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'transparent', // Para manter o layout
+        backgroundColor: 'rgba(0,0,0,0.2)', // Fundo escuro transparente
+        padding: 12,
+        borderRadius: 16,
+        gap: 10,
     },
-    transactionIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+    
+    // Ícone minimalista
+    statIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.1)', // Fundo muito sutil
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
     },
-    transInfo: {
-        flex: 1,
+    
+    statLabel: { 
+        fontSize: 10, 
+        color: 'rgba(255,255,255,0.6)', 
+        marginBottom: 2 
     },
-    transTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: COLORS.textPrimary,
-        marginBottom: 4,
+    statValue: { 
+        fontSize: 14, 
+        fontWeight: 'bold', 
+        color: '#FFF' 
     },
-    transDate: {
-        fontSize: 12,
-        color: COLORS.textSecondary,
+
+    // --- Atalhos Rápidos ---
+    sectionTitle: { 
+        fontSize: 18, 
+        fontWeight: 'bold', 
+        color: COLORS.text, 
+        marginBottom: 15 
     },
-    transAmount: {
-        fontSize: 16,
-        fontWeight: 'bold',
+    shortcutsGrid: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        marginBottom: 30 
+    },
+    shortcutItem: { 
+        alignItems: 'center', 
+        gap: 8 
+    },
+    shortcutIcon: { 
+        width: 56, 
+        height: 56, 
+        borderRadius: 18, 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        shadowOpacity: 0.3, 
+        elevation: 5 
+    },
+    shortcutLabel: { 
+        color: COLORS.textSecondary, 
+        fontSize: 12 
+    },
+
+    // --- Dica do Mestre ---
+    tipCard: {
+        backgroundColor: '#1F1F23',
+        padding: 20,
+        borderRadius: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15,
+        borderLeftWidth: 4,
+        borderLeftColor: '#F59E0B',
+    },
+    tipText: { 
+        color: '#DDD', 
+        fontSize: 14, 
+        flex: 1, 
+        lineHeight: 20 
     },
 });

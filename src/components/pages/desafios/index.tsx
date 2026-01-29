@@ -1,31 +1,36 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { 
-    View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, 
-    Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard 
+    View, Text, ScrollView, TouchableOpacity, ActivityIndicator, 
+    Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Alert 
 } from 'react-native';
+import { FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { FontAwesome } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 
 import { style, COLORS } from './style';
 import FloatingMenu from '../../menuFlutuante/menuFlutuante';
+import { AuthContext } from '../../../services/authContext';
 import api from '../../../services/api';
 
 interface Challenge {
     id: number;
-    nome: string;
-    descriptions: string;
-    startDate: string;
-    endDate: string;
+    name: string; // O backend pode retornar 'nome' ou 'name', ajuste se necessário
+    description: string; // Ou 'descriptions'
     rewardExperiencePoints: number;
+    endDate: string;
+    completed?: boolean;
 }
 
 export default function Desafios() {
-    const [loading, setLoading] = useState(true);
+    const { user } = useContext(AuthContext);
     const [challenges, setChallenges] = useState<Challenge[]>([]);
+    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    
+    // Filtro de Abas
+    const [filter, setFilter] = useState<'active' | 'completed'>('active');
 
-    // Estados do Modal
+    // Estados do Modal de Criação
     const [modalVisible, setModalVisible] = useState(false);
     const [nome, setNome] = useState('');
     const [descricao, setDescricao] = useState('');
@@ -40,12 +45,22 @@ export default function Desafios() {
 
     async function fetchChallenges() {
         try {
-            // Só mostra loading full screen se não tiver nada carregado
             if (challenges.length === 0) setLoading(true);
             const response = await api.get('/api/challenges');
-            setChallenges(response.data);
+            
+            // Normalização dos dados (caso backend use nomes diferentes)
+            const normalizedData = response.data.map((c: any) => ({
+                id: c.id,
+                name: c.nome || c.name,
+                description: c.descriptions || c.description,
+                rewardExperiencePoints: c.rewardExperiencePoints,
+                endDate: c.endDate,
+                completed: c.completed || false
+            }));
+
+            setChallenges(normalizedData);
         } catch (error) {
-            console.log("Erro ao buscar desafios:", error);
+            console.log("Erro ao buscar desafios");
         } finally {
             setLoading(false);
         }
@@ -71,9 +86,10 @@ export default function Desafios() {
         endDate.setDate(today.getDate() + diasValue);
         const formatDateISO = (d: Date) => d.toISOString().split('T')[0];
 
+        // Ajuste o payload conforme seu DTO Java (ChallengeRequestDTO)
         const payload = {
-            nome,
-            descriptions: descricao,
+            name: nome, // ou 'nome'
+            description: descricao, // ou 'descriptions'
             startDate: formatDateISO(today),
             endDate: formatDateISO(endDate),
             rewardExperiencePoints: xpValue
@@ -84,8 +100,8 @@ export default function Desafios() {
             
             Toast.show({
                 type: 'success',
-                text1: 'Desafio Criado!',
-                text2: `${nome} foi adicionado.`
+                text1: 'Quest Criada!',
+                text2: `${nome} foi adicionado ao mural.`
             });
 
             setModalVisible(false);
@@ -107,86 +123,151 @@ export default function Desafios() {
         setDuracao('');
     }
 
-    const formatDate = (dateString: string) => {
-        if (!dateString) return '';
-        const parts = dateString.split('-');
-        return `${parts[2]}/${parts[1]}`;
+    // Função para escolher ícone baseado no texto
+    const getIconName = (title: string) => {
+        const t = title.toLowerCase();
+        if (t.includes('login') || t.includes('diário')) return 'calendar-check';
+        if (t.includes('meta') || t.includes('economia')) return 'piggy-bank';
+        if (t.includes('gasto') || t.includes('compra')) return 'shopping-cart';
+        return 'scroll'; 
     };
 
-    if (loading) {
-        return (
-            <View style={[style.container, { justifyContent: 'center', alignItems: 'center' }]}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
-        );
-    }
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        // Trata datas YYYY-MM-DD
+        const parts = dateString.split('-');
+        if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
+        return dateString;
+    };
+
+    // Filtra a lista
+    const filteredList = challenges.filter(c => 
+        filter === 'active' ? !c.completed : c.completed
+    );
 
     return (
         <View style={style.container}>
-            <ScrollView contentContainerStyle={style.contentContainer}>
+            <ScrollView contentContainerStyle={style.contentContainer} showsVerticalScrollIndicator={false}>
                 
-                {/* --- CABEÇALHO ALINHADO --- */}
-                <View style={style.headerRow}>
-                    <Text style={style.pageTitle}>Desafios</Text>
+                {/* HEADER */}
+                <View style={style.header}>
+                    <Text style={style.title}>Desafios</Text>
+                    <Text style={style.subtitle}>Complete missões para ganhar XP</Text>
                     
+                    {/* Botão Adicionar (Agora no Header) */}
                     <TouchableOpacity 
-                        style={style.addButton} 
+                        style={{ position: 'absolute', right: 0, top: 10, padding: 10 }}
                         onPress={() => setModalVisible(true)}
-                        activeOpacity={0.7}
                     >
-                        <FontAwesome name="plus" size={18} color={COLORS.primary} />
+                         <FontAwesome5 name="plus" size={20} color={COLORS.primary} />
                     </TouchableOpacity>
                 </View>
-                {/* --------------------------- */}
 
-                <Text style={style.sectionTitle}>Disponíveis</Text>
+                {/* ABAS (TABS) */}
+                <View style={style.tabContainer}>
+                    <TouchableOpacity 
+                        style={[style.tabButton, filter === 'active' && style.activeTab]} 
+                        onPress={() => setFilter('active')}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={[style.tabText, filter === 'active' && style.activeTabText]}>
+                            Disponíveis
+                        </Text>
+                    </TouchableOpacity>
 
-                {challenges.length === 0 ? (
-                    <View style={style.emptyState}>
-                        <FontAwesome name="trophy" size={48} color="#27272A" />
-                        <Text style={style.emptyText}>Sem desafios ativos.</Text>
-                        <TouchableOpacity onPress={() => setModalVisible(true)}>
-                            <Text style={{ color: COLORS.primary, marginTop: 10, fontWeight: 'bold' }}>
-                                Criar o primeiro desafio
-                            </Text>
-                        </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[style.tabButton, filter === 'completed' && style.activeTab]} 
+                        onPress={() => setFilter('completed')}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={[style.tabText, filter === 'completed' && style.activeTabText]}>
+                            Concluídas
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* LISTA */}
+                {loading ? (
+                    <ActivityIndicator color={COLORS.primary} size="large" style={{marginTop: 50}} />
+                ) : filteredList.length === 0 ? (
+                    <View style={style.emptyContainer}>
+                        <FontAwesome5 name="ghost" size={50} color={COLORS.textSecondary} />
+                        <Text style={style.emptyText}>
+                            {filter === 'active' 
+                                ? "Nenhuma missão disponível no momento." 
+                                : "Nenhuma missão concluída ainda."}
+                        </Text>
+                        {filter === 'active' && (
+                             <TouchableOpacity onPress={() => setModalVisible(true)}>
+                                <Text style={{ color: COLORS.primary, marginTop: 15, fontWeight: 'bold' }}>
+                                    + Criar Nova Quest
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 ) : (
-                    challenges.map((item) => (
-                        <TouchableOpacity key={item.id} style={style.challengeCard} activeOpacity={0.9}>
-                            <View style={style.cardHeader}>
-                                <View style={style.iconContainer}>
-                                    <FontAwesome 
-                                        name={item.rewardExperiencePoints >= 500 ? "star" : "shield"} 
-                                        size={24} 
-                                        color={COLORS.secondary} 
-                                    />
-                                </View>
-                                <View style={style.headerText}>
-                                    <Text style={style.challengeName}>{item.nome}</Text>
-                                    <Text style={style.challengeReward}>+{item.rewardExperiencePoints} XP</Text>
-                                </View>
+                    filteredList.map((item) => (
+                        <View 
+                            key={item.id} 
+                            style={[
+                                style.questCard, 
+                                item.completed && style.completedCard
+                            ]}
+                        >
+                            {/* Ícone Temático */}
+                            <View style={[
+                                style.iconContainer,
+                                item.completed && { borderColor: COLORS.success, backgroundColor: 'rgba(0, 230, 118, 0.1)' }
+                            ]}>
+                                <FontAwesome5 
+                                    name={getIconName(item.name)} 
+                                    size={20} 
+                                    color={item.completed ? COLORS.success : COLORS.primary} 
+                                />
                             </View>
 
-                            <Text style={style.description}>{item.descriptions}</Text>
-                            
-                            <View style={style.footerRow}>
-                                <View style={style.dateTag}>
-                                    <FontAwesome name="calendar" size={12} color={COLORS.textSecondary} />
-                                    <Text style={style.dateText}> Até {formatDate(item.endDate)}</Text>
-                                </View>
-                                <View style={style.statusBadge}>
-                                    <Text style={style.statusText}>Ativo</Text>
-                                </View>
+                            {/* Textos */}
+                            <View style={style.questContent}>
+                                <Text style={[
+                                    style.questTitle,
+                                    item.completed && { textDecorationLine: 'line-through', color: COLORS.textSecondary }
+                                ]}>
+                                    {item.name}
+                                </Text>
+                                <Text style={style.questDesc} numberOfLines={2}>
+                                    {item.description}
+                                </Text>
+                                {/* Data Limite (Pequena) */}
+                                {item.endDate && !item.completed && (
+                                    <Text style={{fontSize: 10, color: '#666', marginTop: 5}}>
+                                        <FontAwesome5 name="clock" size={10} /> Até {formatDate(item.endDate)}
+                                    </Text>
+                                )}
                             </View>
-                        </TouchableOpacity>
+
+                            {/* Recompensa / Status */}
+                            <View style={style.rewardContainer}>
+                                {item.completed ? (
+                                    <View style={{alignItems: 'center'}}>
+                                        <Text style={{color: COLORS.success, fontSize: 10, fontWeight: 'bold'}}>FEITO</Text>
+                                        <FontAwesome5 name="check-circle" size={18} color={COLORS.success} style={style.checkIcon} />
+                                    </View>
+                                ) : (
+                                    <View style={style.xpBadge}>
+                                        <FontAwesome5 name="bolt" size={10} color={COLORS.xp} />
+                                        <Text style={style.xpText}>+{item.rewardExperiencePoints}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
                     ))
                 )}
+
             </ScrollView>
 
             <FloatingMenu currentRoute="Desafios" />
 
-            {/* MODAL DE CADASTRO */}
+            {/* MODAL DE CRIAÇÃO (Estilo Dark Modern) */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -195,52 +276,57 @@ export default function Desafios() {
             >
                 <KeyboardAvoidingView 
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={style.modalOverlay}
+                    style={{flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.8)'}}
                 >
-                    <View style={style.modalContent}>
-                        <Text style={style.modalTitle}>Novo Desafio</Text>
+                    <View style={{
+                        backgroundColor: '#18181B', 
+                        borderTopLeftRadius: 30, 
+                        borderTopRightRadius: 30, 
+                        padding: 25, 
+                        borderTopWidth: 1, 
+                        borderColor: COLORS.primary
+                    }}>
+                        <Text style={{fontSize: 22, fontWeight: 'bold', color: '#FFF', marginBottom: 20, textAlign: 'center'}}>
+                            Nova Quest
+                        </Text>
 
-                        <View style={style.inputGroup}>
-                            <Text style={style.label}>Título</Text>
-                            <TextInput
-                                style={style.input}
-                                placeholder="Ex: Semana Econômica"
-                                placeholderTextColor="#555"
-                                value={nome}
-                                onChangeText={setNome}
-                            />
-                        </View>
+                        {/* Nome */}
+                        <TextInput
+                            style={{backgroundColor: '#27272A', color: '#FFF', borderRadius: 12, padding: 15, marginBottom: 15, borderWidth: 1, borderColor: '#333'}}
+                            placeholder="Título (Ex: Semana Econômica)"
+                            placeholderTextColor="#666"
+                            value={nome}
+                            onChangeText={setNome}
+                        />
 
-                        <View style={style.inputGroup}>
-                            <Text style={style.label}>Descrição / Regra</Text>
-                            <TextInput
-                                style={style.input}
-                                placeholder="Ex: Não gaste com delivery..."
-                                placeholderTextColor="#555"
-                                value={descricao}
-                                onChangeText={setDescricao}
-                                multiline
-                            />
-                        </View>
+                        {/* Descrição */}
+                        <TextInput
+                            style={{backgroundColor: '#27272A', color: '#FFF', borderRadius: 12, padding: 15, marginBottom: 15, borderWidth: 1, borderColor: '#333', height: 80, textAlignVertical: 'top'}}
+                            placeholder="Descrição da missão..."
+                            placeholderTextColor="#666"
+                            value={descricao}
+                            onChangeText={setDescricao}
+                            multiline
+                        />
 
-                        <View style={{ flexDirection: 'row', gap: 10 }}>
-                            <View style={[style.inputGroup, { flex: 1 }]}>
-                                <Text style={style.label}>XP</Text>
+                        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{color: '#AAA', marginBottom: 5, fontSize: 12}}>Recompensa (XP)</Text>
                                 <TextInput
-                                    style={style.input}
+                                    style={{backgroundColor: '#27272A', color: '#FFF', borderRadius: 12, padding: 15, borderWidth: 1, borderColor: '#333'}}
                                     placeholder="500"
-                                    placeholderTextColor="#555"
+                                    placeholderTextColor="#666"
                                     keyboardType="numeric"
                                     value={xp}
                                     onChangeText={setXp}
                                 />
                             </View>
-                            <View style={[style.inputGroup, { flex: 1 }]}>
-                                <Text style={style.label}>Duração (Dias)</Text>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{color: '#AAA', marginBottom: 5, fontSize: 12}}>Duração (Dias)</Text>
                                 <TextInput
-                                    style={style.input}
+                                    style={{backgroundColor: '#27272A', color: '#FFF', borderRadius: 12, padding: 15, borderWidth: 1, borderColor: '#333'}}
                                     placeholder="7"
-                                    placeholderTextColor="#555"
+                                    placeholderTextColor="#666"
                                     keyboardType="numeric"
                                     value={duracao}
                                     onChangeText={setDuracao}
@@ -248,20 +334,20 @@ export default function Desafios() {
                             </View>
                         </View>
 
-                        <View style={style.modalActions}>
+                        <View style={{flexDirection: 'row', gap: 15}}>
                             <TouchableOpacity 
-                                style={style.buttonCancel} 
+                                style={{flex: 1, padding: 15, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.secondary}} 
                                 onPress={() => { setModalVisible(false); resetForm(); }}
                             >
-                                <Text style={[style.buttonText, { color: COLORS.textSecondary }]}>Cancelar</Text>
+                                <Text style={{color: '#FFF'}}>Cancelar</Text>
                             </TouchableOpacity>
                             
                             <TouchableOpacity 
-                                style={[style.buttonSave, saving && { opacity: 0.7 }]} 
+                                style={{flex: 1, padding: 15, borderRadius: 12, alignItems: 'center', backgroundColor: COLORS.primary}} 
                                 onPress={handleCreateChallenge}
                                 disabled={saving}
                             >
-                                {saving ? <ActivityIndicator color="#FFF" /> : <Text style={style.buttonText}>Criar</Text>}
+                                {saving ? <ActivityIndicator color="#FFF" /> : <Text style={{color: '#FFF', fontWeight: 'bold'}}>Criar</Text>}
                             </TouchableOpacity>
                         </View>
                     </View>

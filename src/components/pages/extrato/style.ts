@@ -1,122 +1,173 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Dimensions } from "react-native";
+
+const { width } = Dimensions.get('window');
 
 export const COLORS = {
-    primary: '#6A1B9A',      
-    background: '#121212',   
-    card: '#1E1E1E',         
-    textPrimary: '#FFFFFF',
-    textSecondary: '#B0B0B0',
-    income: '#4CAF50',       
-    expense: '#F44336',      
+    background: "#0F0F11",
+    card: "#18181B",
+    primary: "#7C3AED", // Roxo Neon
+    secondary: "#4C1D95",
+    
+    income: "#00E676", // Verde Neon
+    expense: "#FF5252", // Vermelho Suave
+    
+    text: "#E4E4E7",
+    textSecondary: "#A1A1AA",
+    border: "#27272A"
 };
 
 export const style = StyleSheet.create({
     container: {
-        paddingTop: 16,
         flex: 1,
         backgroundColor: COLORS.background,
     },
     contentContainer: {
-        padding: 16,
-        paddingBottom: 80, // Espaço extra para o menu flutuante não tapar o último item
-    },
-    
-    // Título
-    pageTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: COLORS.textPrimary,
-        marginBottom: 24,
-        marginTop: 16,
-        textAlign: 'center',
+        padding: 20,
+        paddingTop: 60,
+        paddingBottom: 130, // Espaço para menu flutuante
     },
 
-    // Navegação de Mês
+    // --- HEADER ---
+    header: {
+        marginBottom: 20,
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: "bold",
+        color: COLORS.text,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: COLORS.textSecondary,
+        marginTop: 5,
+    },
+
+    // --- SELETOR DE MÊS (HUD STYLE) ---
     monthSelector: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: COLORS.card,
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 20,
+        borderRadius: 16,
+        padding: 8,
+        marginBottom: 25,
+        borderWidth: 1,
+        borderColor: COLORS.border,
     },
-    monthNavButton: {
-        padding: 10,
-    },
-    monthLabel: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: COLORS.textPrimary,
-        textTransform: 'capitalize',
-    },
-
-    // Resumo do Mês (Opcional)
-    monthSummary: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 20,
-        paddingHorizontal: 10,
-    },
-    summaryText: {
-        color: COLORS.textSecondary,
-        fontSize: 14,
-    },
-    summaryValue: {
-        color: COLORS.textPrimary,
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-
-    // Lista de Transações
-    transactionItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: COLORS.card,
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 12,
-    },
-    transactionIconContainer: {
+    monthButton: {
         width: 40,
         height: 40,
-        borderRadius: 20,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.05)',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
     },
-    incomeIconBg: {
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    monthText: {
+        color: COLORS.text,
+        fontSize: 16,
+        fontWeight: 'bold',
+        textTransform: 'capitalize',
+        letterSpacing: 0.5,
     },
-    expenseIconBg: {
-        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+
+    // --- RESUMO DO MÊS (BALANÇO) ---
+    summaryRow: {
+        flexDirection: 'row',
+        gap: 15,
+        marginBottom: 30,
     },
-    transactionDetails: {
+    summaryCard: {
+        flex: 1,
+        backgroundColor: COLORS.card,
+        borderRadius: 20,
+        padding: 15,
+        borderWidth: 1,
+        borderColor: COLORS.border,
+        flexDirection: 'row',
+        alignItems: 'center',
+        // Sombra leve
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 5,
+    },
+    summaryIconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+    },
+    summaryLabel: {
+        fontSize: 10,
+        color: COLORS.textSecondary,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+    },
+    summaryValue: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginTop: 2,
+    },
+
+    // --- LISTA DE TRANSAÇÕES ---
+    sectionTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: COLORS.textSecondary,
+        marginBottom: 15,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+    },
+    transactionCard: {
+        backgroundColor: COLORS.card,
+        borderRadius: 18,
+        padding: 15,
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.border,
+    },
+    tIconContainer: {
+        width: 50,
+        height: 50,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 15,
+    },
+    tContent: {
         flex: 1,
     },
-    transactionDescription: {
+    tTitle: {
         fontSize: 16,
-        color: COLORS.textPrimary,
-        fontWeight: '500',
+        fontWeight: 'bold',
+        color: COLORS.text,
+        marginBottom: 4,
     },
-    transactionDate: {
+    tDate: {
         fontSize: 12,
         color: COLORS.textSecondary,
-        marginTop: 4,
     },
-    transactionAmount: {
+    tAmount: {
         fontSize: 16,
         fontWeight: 'bold',
     },
     
-    // Estado Vazio
-    emptyState: {
+    // Empty State
+    emptyContainer: {
         alignItems: 'center',
+        justifyContent: 'center',
         marginTop: 50,
+        opacity: 0.6,
     },
     emptyText: {
         color: COLORS.textSecondary,
+        fontSize: 14,
         marginTop: 10,
-        fontStyle: 'italic',
     }
 });
