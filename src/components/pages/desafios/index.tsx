@@ -14,8 +14,8 @@ import api from '../../../services/api';
 
 interface Challenge {
     id: number;
-    name: string; // O backend pode retornar 'nome' ou 'name', ajuste se necessário
-    description: string; // Ou 'descriptions'
+    name: string; 
+    description: string; 
     rewardExperiencePoints: number;
     endDate: string;
     completed?: boolean;
@@ -48,7 +48,7 @@ export default function Desafios() {
             if (challenges.length === 0) setLoading(true);
             const response = await api.get('/api/challenges');
             
-            // Normalização dos dados (caso backend use nomes diferentes)
+            // Normalização dos dados
             const normalizedData = response.data.map((c: any) => ({
                 id: c.id,
                 name: c.nome || c.name,
@@ -86,10 +86,11 @@ export default function Desafios() {
         endDate.setDate(today.getDate() + diasValue);
         const formatDateISO = (d: Date) => d.toISOString().split('T')[0];
 
-        // Ajuste o payload conforme seu DTO Java (ChallengeRequestDTO)
+        // --- CORREÇÃO AQUI ---
+        // Agora usando as chaves exatas do DTO Java
         const payload = {
-            name: nome, // ou 'nome'
-            description: descricao, // ou 'descriptions'
+            nome: nome,              // Antes: name
+            descriptions: descricao, // Antes: description
             startDate: formatDateISO(today),
             endDate: formatDateISO(endDate),
             rewardExperiencePoints: xpValue
@@ -123,7 +124,6 @@ export default function Desafios() {
         setDuracao('');
     }
 
-    // Função para escolher ícone baseado no texto
     const getIconName = (title: string) => {
         const t = title.toLowerCase();
         if (t.includes('login') || t.includes('diário')) return 'calendar-check';
@@ -134,13 +134,11 @@ export default function Desafios() {
 
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
-        // Trata datas YYYY-MM-DD
         const parts = dateString.split('-');
         if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
         return dateString;
     };
 
-    // Filtra a lista
     const filteredList = challenges.filter(c => 
         filter === 'active' ? !c.completed : c.completed
     );
@@ -154,7 +152,6 @@ export default function Desafios() {
                     <Text style={style.title}>Desafios</Text>
                     <Text style={style.subtitle}>Complete missões para ganhar XP</Text>
                     
-                    {/* Botão Adicionar (Agora no Header) */}
                     <TouchableOpacity 
                         style={{ position: 'absolute', right: 0, top: 10, padding: 10 }}
                         onPress={() => setModalVisible(true)}
@@ -237,7 +234,7 @@ export default function Desafios() {
                                 <Text style={style.questDesc} numberOfLines={2}>
                                     {item.description}
                                 </Text>
-                                {/* Data Limite (Pequena) */}
+                                {/* Data Limite */}
                                 {item.endDate && !item.completed && (
                                     <Text style={{fontSize: 10, color: '#666', marginTop: 5}}>
                                         <FontAwesome5 name="clock" size={10} /> Até {formatDate(item.endDate)}
@@ -267,7 +264,7 @@ export default function Desafios() {
 
             <FloatingMenu currentRoute="Desafios" />
 
-            {/* MODAL DE CRIAÇÃO (Estilo Dark Modern) */}
+            {/* MODAL DE CRIAÇÃO */}
             <Modal
                 animationType="slide"
                 transparent={true}
